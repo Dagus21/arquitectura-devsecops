@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # 1. El servicio de la Base de Datos
+  database:
+    image: postgres:15-alpine # Usamos la versión 15 y una imagen ligera (alpine)
+    container_name: tienda-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: bdpostgress123
+      POSTGRES_DB: tienda_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Exponemos el puerto para poder conectarnos con pgAdmin desde nuestro PC
+      - "5432:5432"
+    networks:
+      - tienda-net
+
+  # 2. El servicio del Backend (API)
+  backend:
+    image: tienda-api # Usa la imagen que ya construiste
+    container_name: tienda-backend
+    restart: always
+    environment:
+      # ¡IMPORTANTE! Ahora la API se conecta a la BBDD usando el nombre del servicio 'database'
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/tienda_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=bdpostgress123
+    depends_on:
+      - database # Le decimos a Docker que inicie este servicio DESPUÉS de la base de datos
+    networks:
+      - tienda-net
+
+  # 3. El servicio del Frontend E-commerce
+  frontend-ecommerce:
+    image: frontend-ecommerce # Usa la imagen que ya construiste
+    container_name: tienda-ecommerce
+    restart: always
+    networks:
+      - tienda-net
+
+  # 4. El servicio del Frontend Dashboard
+  frontend-dashboard:
+    image: frontend-dashboard # Usa la imagen que ya construiste
+    container_name: tienda-dashboard
+    restart: always
+    networks:
+      - tienda-net
+  
+  # 5. El servicio del Proxy Inverso (la puerta de entrada)
+  proxy:
+    image: caddy:2-alpine
+    container_name: tienda-proxy
+    restart: always
+    ports:
+      # Mapeamos los puertos HTTP y HTTPS de nuestro PC a los del contenedor Caddy
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Montamos el Caddyfile y dos volúmenes para que Caddy guarde los certificados SSL
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - tienda-net
+
+# Definimos los volúmenes para persistir los datos
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
+
+# Definimos la red personalizada para que todos los contenedores se puedan comunicar
+networks:
+  tienda-net:
+    driver: bridge

@@ -1,0 +1,21 @@
+# Caddyfile Principal del Proxy Inverso
+
+# (NUEVO) Redirige el tráfico de la documentación de la API
+docs.localhost {
+    reverse_proxy backend:8080
+}
+
+# Redirige el tráfico de la API
+api.localhost {
+    reverse_proxy backend:8080
+}
+
+# Redirige el tráfico del Dashboard
+dashboard.localhost {
+    reverse_proxy frontend-dashboard:80
+}
+
+# Redirige el tráfico del E-commerce
+tienda.localhost {
+    reverse_proxy frontend-ecommerce:80
+}

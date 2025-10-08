@@ -1,0 +1,168 @@
+### ======================================================================
+###                   PRUEBAS PARA LA API DE PRODUCTOS
+### ======================================================================
+
+### 1. CREAR NUEVOS PRODUCTOS (POST)
+### Ejecuta estas peticiones varias veces para poblar tu base de datos.
+### La respuesta debe ser un código 201 Created y el cuerpo debe contener
+### el objeto recién creado con su nuevo ID asignado por la base de datos.
+
+POST http://localhost:8080/api/productos
+Content-Type: application/json
+
+{
+  "nombre": "Abrigo de Lana Premium",
+  "descripcion": "Un abrigo elegante y cálido, perfecto para el invierno.",
+  "precio": 299.99,
+  "stock": 25
+}
+
+###
+POST http://localhost:8080/api/productos
+Content-Type: application/json
+
+{
+  "nombre": "Gorro de Nieve con Pompón",
+  "descripcion": "Diseño moderno y tejido suave.",
+  "precio": 35.50,
+  "stock": 150
+}
+
+###
+POST http://localhost:8080/api/productos
+Content-Type: application/json
+
+{
+  "nombre": "Bufanda de Cashmere",
+  "descripcion": "Lujo y confort para tu cuello.",
+  "precio": 89.99,
+  "stock": 75
+}
+
+
+### ======================================================================
+### 2. OBTENER TODOS LOS PRODUCTOS (GET)
+### Deberías ver una lista JSON con todos los productos que creaste arriba.
+### El código de respuesta debe ser 200 OK.
+
+GET http://localhost:8080/api/productos
+
+
+### ======================================================================
+### 3. OBTENER UN PRODUCTO POR SU ID (GET)
+### Cambia el número al final de la URL por un ID que exista
+### (probablemente 1, 2, 3, etc.). La respuesta debe ser 200 OK.
+
+GET http://localhost:8080/api/productos/1
+
+
+### PRUEBA DE ERROR: Obtener un producto con un ID que NO existe.
+### Cambia el ID a un número alto como 999.
+### La respuesta debe ser un código 404 Not Found y el cuerpo estará vacío.
+
+GET http://localhost:8080/api/productos/999
+
+
+### ======================================================================
+### 4. ACTUALIZAR UN PRODUCTO (PUT)
+### Asegúrate de usar un ID que exista. Esta petición actualizará los datos
+### del producto con ID 2. La respuesta debe ser 200 OK con el objeto actualizado.
+
+PUT http://localhost:8080/api/productos/2
+Content-Type: application/json
+
+{
+  "nombre": "Gorro de Nieve - Edición Especial",
+  "descripcion": "Diseño actualizado con nuevos colores.",
+  "precio": 39.99,
+  "stock": 120
+}
+
+
+### ======================================================================
+### 5. BORRAR UN PRODUCTO (DELETE)
+### Asegúrate de usar un ID que exista. Vamos a borrar el producto con ID 3.
+### La respuesta debe ser un código 204 No Content y no tendrá cuerpo.
+
+DELETE http://localhost:8080/api/productos/3
+
+
+### ======================================================================
+### 6. VERIFICAR EL BORRADO
+### Vuelve a ejecutar la petición para obtener todos los productos.
+### Verás que el producto con ID 3 (la bufanda) ya no está en la lista.
+
+GET http://localhost:8080/api/productos
+
+### **Paso 4: Probar la Validación**
+
+###1.  **Reinicia tu aplicación Spring Boot.**
+###2.  **Usa tu archivo `requests.http`** para hacer pruebas.
+
+**Prueba 1: Petición `POST` con datos inválidos**
+
+```http
+### PRUEBA DE VALIDACIÓN: Crear un producto con errores
+POST http://localhost:8080/api/productos
+Content-Type: application/json
+
+{
+  "nombre": "A",
+  "descripcion": "",
+  "precio": -50
+}
+
+### ======================================================================
+###                   PRUEBAS DE SEGURIDAD
+### ======================================================================
+
+### PRUEBA 1: OBTENER TODOS LOS PRODUCTOS (Debe funcionar sin login)
+GET http://localhost:8080/api/productos
+
+### ----------------------------------------------------------------------
+
+### PRUEBA 2: INTENTAR CREAR UN PRODUCTO (POST)
+
+### Caso A: Sin Autenticación (Ahora debe fallar con 401 Unauthorized)
+POST http://localhost:8080/api/productos
+Content-Type: application/json
+
+{
+  "nombre": "Producto de Prueba (Sin Auth)",
+  "descripcion": "Esto no debería crearse",
+  "precio": 10.0,
+  "stock": 10
+}
+
+### ---
+
+### Caso B: Con Autenticación de 'user' (Debe fallar con 403 Forbidden)
+# Esta sintaxis especial le dice al cliente HTTP de IntelliJ que use Autenticación Básica.
+# El usuario 'user' puede iniciar sesión, pero no tiene el rol 'ADMIN'.
+# @auth user:password
+POST http://localhost:8080/api/productos
+Content-Type: application/json
+Authorization: Basic user password
+
+{
+  "nombre": "Producto de Prueba (Con User)",
+  "descripcion": "Esto tampoco debería crearse",
+  "precio": 20.0,
+  "stock": 20
+}
+
+### ---
+
+### Caso C: Con Autenticación de 'admin' (Debe funcionar con 201 Created)
+# El usuario 'admin' tiene el rol 'ADMIN', por lo que esta petición debería ser exitosa.
+# @auth admin:password
+POST http://localhost:8080/api/productos
+Content-Type: application/json
+Authorization: Basic admin password
+
+{
+  "nombre": "Producto Creado por Admin",
+  "descripcion": "¡Esto sí debería funcionar!",
+  "precio": 30.0,
+  "stock": 30
+}
