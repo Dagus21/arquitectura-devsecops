@@ -1,0 +1,10 @@
+# Dependencias de Node/Bun
+node_modules
+
+# Archivos de build (se generan dentro del contenedor)
+.next
+out
+
+# Logs y archivos del sistema
+npm-debug.log
+.DS_Store

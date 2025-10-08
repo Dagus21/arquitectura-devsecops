@@ -1,0 +1,14 @@
+# Caddyfile para el frontend-dashboard
+
+# Escuchar en el puerto 80
+:80
+
+# Carpeta raíz donde estarán nuestros archivos
+root * /usr/share/caddy
+
+# Habilitar el servidor de archivos estáticos
+file_server
+
+# Redireccionar todas las rutas no encontradas a index.html
+# para que el enrutador de Angular tome el control.
+try_files {path} /index.html

@@ -1,0 +1,9 @@
+# Dependencias de Node/Bun
+node_modules
+
+# Archivos de build de Angular (se generan dentro del contenedor)
+dist
+
+# Logs y archivos del sistema
+npm-debug.log
+.DS_Store
