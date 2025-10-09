@@ -6,10 +6,12 @@ export default function Home() {
 
   // useEffect se ejecuta cuando el componente se carga en el navegador
   useEffect(() => {
-    console.log("Intentando obtener productos desde la API...");
+      console.log("Intentando obtener productos desde la API...");
+      // El prefijo NEXT_PUBLIC_ es OBLIGATORIO para que la variable
+      // esté disponible en el navegador.
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-    // Hacemos una llamada fetch al endpoint público de tu backend
-    fetch('https://api.localhost/api/productos')
+      fetch(`${apiUrl}/productos`)
       .then(response => {
         if (!response.ok) {
           throw new Error('La respuesta de la red no fue exitosa');
