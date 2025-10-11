@@ -27,5 +27,6 @@ export class AppComponent implements OnInit {
         console.error("Error al obtener productos en Angular:", err);
       }
     });
+    
   }
 }
