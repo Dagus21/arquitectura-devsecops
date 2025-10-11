@@ -1,15 +1,14 @@
-// src/app/app.ts
 import { Component, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ProductoService } from './services/producto';
+import { RouterOutlet } from '@angular/router';
+import { ProductoService } from './services/producto'; // Asegúrate que la ruta sea correcta
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule],
-  templateUrl: './app.html',  // Usando el nombre de tu archivo
-  styleUrls: ['./app.scss']    // Usando el nombre de tu archivo
+  imports: [CommonModule, RouterOutlet],
+  templateUrl: './app.html', // Corregido de app.component.html a app.html
+  styleUrls: ['./app.scss'] // Corregido de app.component.scss a app.scss
 })
 export class AppComponent implements OnInit {
   title = 'frontend-dashboard';
@@ -17,18 +16,16 @@ export class AppComponent implements OnInit {
   constructor(private productoService: ProductoService) {}
 
   ngOnInit(): void {
-    console.log("Dashboard de Angular intentando obtener productos...");
-    // ESTE ES EL CÓDIGO CORREGIDO
-    // 1. Usamos 'getProductos' en lugar de 'obtenerProductos'
+    console.log('Dashboard de Angular intentando obtener productos...');
+    // Usamos 'getProductos' en lugar de 'obtenerProductos'
     this.productoService.getProductos().subscribe({
-      // 2. Añadimos el tipo 'any' a 'data' y 'err'
+      // Añadimos el tipo 'any' a 'data' y 'err'
       next: (data: any) => {
-    	console.log('Productos recibidos:', data);
+        console.log('Productos recibidos:', data);
       },
       error: (err: any) => {
         console.error('Error al obtener productos en Angular:', err);
       }
     });
-
   }
 }
