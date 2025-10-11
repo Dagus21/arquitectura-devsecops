@@ -1,22 +1,20 @@
-// src/app/services/producto.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_CONFIG } from '../api-config'; // <-- 1. Importa desde el nuevo archivo
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductoService {
+  // 2. Construye la URL base a partir de nuestra nueva constante
+  private apiUrl = `${API_CONFIG.apiUrl}/api/productos`;
 
-  // Definimos la URL de nuestra API de backend
-  private apiUrl = 'https://api.localhost/api/productos';
-
-  // Inyectamos el HttpClient de Angular en el constructor
   constructor(private http: HttpClient) { }
 
-  // Creamos un método para obtener todos los productos
-  // Devuelve un "Observable", que es como Angular maneja las operaciones asíncronas
-  obtenerProductos(): Observable<any> {
-    return this.http.get(this.apiUrl);
+  // 3. Usa la URL construida para obtener los productos
+  getProductos(): Observable<any[]> {
+    console.log(`Pidiendo productos a la URL: ${this.apiUrl}`);
+    return this.http.get<any[]>(this.apiUrl);
   }
 }

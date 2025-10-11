@@ -3,6 +3,11 @@
 # Usamos la imagen oficial de Bun para compilar nuestro proyecto
 # ========================================================================
 FROM oven/bun:1 AS builder
+# ¡AQUÍ! ¡ESTE ES EL LUGAR CORRECTO!
+# 1. Declara que vamos a recibir un argumento de construcción
+ARG NEXT_PUBLIC_API_URL
+# 2. Conviértelo en una variable de entorno para que el build la pueda usar
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 # Establecemos el directorio de trabajo dentro del contenedor
 WORKDIR /app

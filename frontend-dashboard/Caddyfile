@@ -1,14 +1,19 @@
-# Caddyfile para el frontend-dashboard
+# Caddyfile para el contenedor del Dashboard de Angular (/frontend-dashboard/Caddyfile)
 
-# Escuchar en el puerto 80
-:80
+:80 {
+    # Establece la carpeta raíz donde están los archivos compilados
+    root * /usr/share/caddy
 
-# Carpeta raíz donde estarán nuestros archivos
-root * /usr/share/caddy
+    # Habilita la compresión para que el sitio cargue más rápido
+    encode gzip
 
-# Habilitar el servidor de archivos estáticos
-file_server
-
-# Redireccionar todas las rutas no encontradas a index.html
-# para que el enrutador de Angular tome el control.
-try_files {path} /index.html
+    # Redirige todas las peticiones a archivos que no existen al index.html
+    # Esto es el "corazón" de la configuración para una SPA.
+    # Caddy intentará buscar el archivo estático solicitado (ej: /main.js),
+    # si no lo encuentra, en lugar de dar un 404, devuelve el contenido de /index.html
+    # para que el enrutador de Angular se haga cargo de la ruta.
+    try_files {path} /index.html
+    
+    # Sirve los archivos estáticos desde la raíz definida.
+    file_server
+}

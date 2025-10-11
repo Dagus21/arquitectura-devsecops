@@ -18,14 +18,17 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     console.log("Dashboard de Angular intentando obtener productos...");
-
-    this.productoService.obtenerProductos().subscribe({
-      next: (data) => {
-        console.log("¡Productos recibidos desde Angular!", data);
+    // ESTE ES EL CÓDIGO CORREGIDO
+    // 1. Usamos 'getProductos' en lugar de 'obtenerProductos'
+    this.productoService.getProductos().subscribe({
+      // 2. Añadimos el tipo 'any' a 'data' y 'err'
+      next: (data: any) => {
+    	console.log('Productos recibidos:', data);
       },
-      error: (err) => {
-        console.error("Error al obtener productos en Angular:", err);
+      error: (err: any) => {
+        console.error('Error al obtener productos en Angular:', err);
       }
     });
+
   }
 }

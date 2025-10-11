@@ -34,10 +34,11 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(authorize -> authorize
+	http
+            .cors(Customizer.withDefaults())
+            .csrf(csrf -> csrf.disable())
+            // ¡¡¡CAMBIO RADICAL AQUÍ!!!
+            .authorizeHttpRequests(authorize -> authorize
 
                         // Cambiamos la ruta de v3/api-docs a la nueva
                         .requestMatchers("/api/auth/login").permitAll()
@@ -49,15 +50,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/productos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/productos/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
-                )
-                // ... resto del método ...
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            )
+            .sessionManagement(session -> session
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
+   	 return http.build();
     }
 
     /**
