@@ -1,14 +1,17 @@
-# Caddyfile para el frontend-dashboard
+:80 {
+    # Establece la carpeta raíz donde están los archivos
+    root * /usr/share/caddy
 
-# Escuchar en el puerto 80
-:80
+    # Habilita la compresión para que el sitio cargue más rápido
+    encode gzip
 
-# Carpeta raíz donde estarán nuestros archivos
-root * /usr/share/caddy
+    # Sirve los archivos estáticos
+    file_server
 
-# Habilitar el servidor de archivos estáticos
-file_server
-
-# Redireccionar todas las rutas no encontradas a index.html
-# para que el enrutador de Angular tome el control.
-try_files {path} /index.html
+    # Esta es la regla mágica para las SPAs (Angular/React/Vue):
+    # Si Caddy no encuentra un archivo que coincida con la URL
+    # (por ejemplo, /dashboard/usuarios), en lugar de dar un error 404,
+    # simplemente devuelve el archivo index.html.
+    # Esto permite que el enrutador de Angular tome el control.
+    try_files {path} /index.html
+}

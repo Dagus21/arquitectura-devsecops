@@ -35,7 +35,11 @@ services:
 
   # 3. El servicio del Frontend E-commerce
   frontend-ecommerce:
-    image: frontend-ecommerce # Usa la imagen que ya construiste
+  # image: frontend-ecommerce  <-- ¡COMENTA O BORRA ESTA LÍNEA!
+    build: # <-- ¡AÑADE ESTA SECCIÓN!
+      context: ./frontend-ecommerce
+      args:
+        - NEXT_PUBLIC_API_URL=http://72.60.170.134/api
     container_name: tienda-ecommerce
     restart: always
     networks:
@@ -48,7 +52,7 @@ services:
     restart: always
     networks:
       - tienda-net
-  
+
   # 5. El servicio del Proxy Inverso (la puerta de entrada)
   proxy:
     image: caddy:2-alpine

@@ -32,4 +32,3 @@ COPY --from=builder /app/dist/frontend-dashboard/browser /usr/share/caddy
 EXPOSE 80
 
 # Iniciamos el servidor Caddy
-CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]

@@ -1,21 +1,19 @@
-# Caddyfile Principal del Proxy Inverso
+:80 {
+    # El bloque 'route' le dice a Caddy que evalúe estas reglas en orden estricto.
+    route {
+        # 1. Si la ruta empieza con /api/, envíala al backend y detén el procesamiento.
+        handle /api/* {
+            reverse_proxy backend:8080
+        }
 
-# (NUEVO) Redirige el tráfico de la documentación de la API
-docs.localhost {
-    reverse_proxy backend:8080
-}
+        # 2. Si la ruta empieza con /dashboard/, envíala al dashboard y detén el procesamiento.
+        handle /dashboard/* {
+            reverse_proxy frontend-dashboard:80
+        }
 
-# Redirige el tráfico de la API
-api.localhost {
-    reverse_proxy backend:8080
-}
-
-# Redirige el tráfico del Dashboard
-dashboard.localhost {
-    reverse_proxy frontend-dashboard:80
-}
-
-# Redirige el tráfico del E-commerce
-tienda.localhost {
-    reverse_proxy frontend-ecommerce:80
+        # 3. Si ninguna de las reglas anteriores coincidió, envía todo lo demás al e-commerce.
+        handle {
+            reverse_proxy frontend-ecommerce:80
+        }
+    }
 }
