@@ -8,7 +8,7 @@ import { API_CONFIG } from '../api-config'; // <-- 1. Importa desde el nuevo arc
 })
 export class ProductoService {
   // 2. Construye la URL base a partir de nuestra nueva constante
-  private apiUrl = `${API_CONFIG.apiUrl}/api/productos`;
+  private apiUrl = `${API_CONFIG.apiUrl}/productos`;
 
   constructor(private http: HttpClient) { }
 
