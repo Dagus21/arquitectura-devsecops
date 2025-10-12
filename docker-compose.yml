@@ -1,4 +1,4 @@
-# docker-compose.yml - VERSIÓN FINAL CORREGIDA
+# docker-compose.yml - VERSIÓN FINAL SEGURA (DB NO EXPUESTA)
 
 version: '3.8'
 
@@ -13,8 +13,7 @@ services:
       POSTGRES_DB: tienda_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # LA SECCIÓN 'ports' HA SIDO ELIMINADA DE AQUÍ
     networks:
       - tienda-net
 
@@ -37,7 +36,7 @@ services:
     build:
       context: ./frontend-ecommerce
       args:
-        - NEXT_PUBLIC_API_URL=http://72.60.170.134/api
+        - NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
     image: mi-tienda/ecommerce
     container_name: tienda-ecommerce
     restart: always
@@ -48,7 +47,7 @@ services:
     build:
       context: ./frontend-dashboard
       args:
-        - API_URL=http://72.60.170.134/api
+        - API_URL=https://miscelaneasdavid.shop/api
     image: mi-tienda/dashboard
     container_name: tienda-dashboard
     restart: always

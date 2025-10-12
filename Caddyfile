@@ -1,21 +1,25 @@
-# Caddyfile Principal - Versión Final Corregida
+# Caddyfile Final con Ruta para el Dashboard
 
-:80 {
-    route {
-        # 1. Rutas para la API
-        handle /api* {
-            reverse_proxy backend:8080
-        }
+miscelaneasdavid.shop {
+    encode gzip
 
-        # 2. Rutas para el Dashboard (Esta es TU versión, la correcta)
-        handle /dashboard* {
-            uri strip_prefix /dashboard
-            reverse_proxy frontend-dashboard:80
-        }
+    # Regla 1: Rutas para la API (la más específica primero)
+    # ej: https://miscelaneasdavid.shop/api/...
+    handle /api* {
+        reverse_proxy backend:8080
+    }
 
-        # 3. Rutas para todo lo demás (E-commerce)
-        handle {
-            reverse_proxy frontend-ecommerce:80
-        }
+    # Regla 2: Rutas para el Dashboard
+    # ej: https://miscelaneasdavid.shop/dashboard/...
+    handle /dashboard* {
+        # Esta directiva es clave: quita /dashboard de la URL antes de pasarla al contenedor.
+        # Así, el contenedor de Angular recibe una petición para "/" en lugar de "/dashboard".
+        uri strip_prefix /dashboard
+        reverse_proxy frontend-dashboard:80
+    }
+
+    # Regla 3: Todo lo demás va al E-commerce (la regla "catch-all")
+    handle {
+        reverse_proxy frontend-ecommerce:80
     }
 }
