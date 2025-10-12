@@ -34,15 +34,14 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-	http
+        http
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             // ¡¡¡CAMBIO RADICAL AQUÍ!!!
             .authorizeHttpRequests(authorize -> authorize
 
                         // Cambiamos la ruta de v3/api-docs a la nueva
-                        .requestMatchers("/api/auth/login").permitAll()
-                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll() // <-- CAMBIO AQUÍ
+                        .requestMatchers("/api/auth/login", "/api/api-docs/**", "/api/swagger-ui/**", "/api/swagger-ui.html").permitAll()
 
                         // ... el resto de tu configuración ...
                         .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
@@ -57,7 +56,7 @@ public class SecurityConfig {
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-   	 return http.build();
+         return http.build();
     }
 
     /**
