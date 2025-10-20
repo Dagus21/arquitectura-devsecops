@@ -1,6 +1,9 @@
-# docker-compose.yml - VERSIÓN FINAL SEGURA (DB NO EXPUESTA)
-
-version: '3.8'
+# =================================================================
+# == docker-compose.yml - VERSIÓN FINAL MODERNA Y SEGURA (CI/CD)
+# =================================================================
+# Se ha eliminado la directiva 'version', ya que es obsoleta
+# en la especificación moderna de Docker Compose.
+# =================================================================
 
 services:
   database:
@@ -8,47 +11,36 @@ services:
     container_name: tienda-db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: bdpostgress123
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: tienda_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # LA SECCIÓN 'ports' HA SIDO ELIMINADA DE AQUÍ
     networks:
       - tienda-net
 
   backend:
-    build:
-      context: ./Backend
-    image: mi-tienda/backend
+    image: gustavo763/tienda-backend:latest
     container_name: tienda-backend
     restart: always
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/tienda_db
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=bdpostgress123
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       - database
     networks:
       - tienda-net
 
   frontend-ecommerce:
-    build:
-      context: ./frontend-ecommerce
-      args:
-        - NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
-    image: mi-tienda/ecommerce
+    image: gustavo763/tienda-ecommerce:latest
     container_name: tienda-ecommerce
     restart: always
     networks:
       - tienda-net
 
   frontend-dashboard:
-    build:
-      context: ./frontend-dashboard
-      args:
-        - API_URL=https://miscelaneasdavid.shop/api
-    image: mi-tienda/dashboard
+    image: gustavo763/tienda-dashboard:latest
     container_name: tienda-dashboard
     restart: always
     networks:

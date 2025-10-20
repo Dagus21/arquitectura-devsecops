@@ -1,16 +1,50 @@
-# Ignorar todas las dependencias de Node.js
-**/node_modules
+# =================================================================
+# == Archivo .gitignore Completo para el Proyecto
+# =================================================================
 
-# Ignorar logs de npm
+# === Archivos de Logs y Entorno (¡MUY IMPORTANTE!) ===
+# Ignora todos los archivos de logs
+*.log
+# Ignora los archivos de entorno que contienen secretos
+.env
+.env.*
+!.env.example
+
+# === Java / Maven (Para el Backend) ===
+# Ignora la carpeta de salida de la compilación
+Backend/target/
+# Ignora los archivos de paquetes generados
+*.jar
+*.war
+# Ignora los logs de Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# === Node.js (Para frontend-ecommerce y frontend-dashboard) ===
+# Ignora la carpeta de dependencias (la más pesada)
+node_modules/
+# Ignora los logs de npm/bun y los reportes de errores
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+bun.lockb
+# Ignora las carpetas de salida de la compilación
+.next/
+out/
+build/
+dist/
+# Ignora la caché de Next.js
+.vercel/
 
-# Ignorar carpetas de build de los frontends
-**/dist
-**/.angular/cache
-**/.next
-
-# Ignorar archivos del IDE
+# === IDE y Sistema Operativo ===
+# IntelliJ IDEA
 .idea/
+*.iml
+
+# Visual Studio Code
 .vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
