@@ -1,0 +1,77 @@
+# Nombre del workflow que aparecerá en la pestaña "Actions" de GitHub
+name: Deploy to Production VPS
+
+# Define cuándo se ejecutará este workflow
+on:
+  # Se activa cada vez que se hace un 'push' a la rama 'main'
+  push:
+    branches: [ "main" ]
+
+# Define los trabajos (jobs) que se ejecutarán
+jobs:
+  build-and-deploy:
+    # El tipo de máquina virtual en la que se ejecutará el job
+    runs-on: ubuntu-latest
+
+    # Los pasos que componen el job
+    steps:
+      # 1. Descarga el código de tu repositorio a la máquina virtual de GitHub
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Configura Docker Buildx (un constructor de imágenes moderno y eficiente)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3. Inicia sesión en Docker Hub usando los secretos que configuramos
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: \${{ secrets.DOCKERHUB_USERNAME }}
+          password: \${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 4. Construye y empuja la imagen del Backend
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Backend
+          push: true
+          tags: \${{ secrets.DOCKERHUB_USERNAME }}/tienda-backend:latest
+
+      # 5. Construye y empuja la imagen del E-commerce
+      - name: Build and push E-commerce
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend-ecommerce
+          push: true
+          tags: \${{ secrets.DOCKERHUB_USERNAME }}/tienda-ecommerce:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
+
+      # 6. Construye y empuja la imagen del Dashboard
+      - name: Build and push Dashboard
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend-dashboard
+          push: true
+          tags: \${{ secrets.DOCKERHUB_USERNAME }}/tienda-dashboard:latest
+          build-args: |
+            API_URL=https://miscelaneasdavid.shop/api
+      
+      # 7. Despliega en el VPS usando SSH
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: \${{ secrets.VPS_HOST }}
+          username: \${{ secrets.VPS_USER }}
+          key: \${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          script: |
+            echo "--- Conectado al VPS. Iniciando despliegue... ---"
+            cd ~/proyecto_prueba
+            echo "--- 1. Descargando las imágenes más recientes de Docker Hub ---"
+            docker-compose pull
+            echo "--- 2. Reiniciando los servicios con las nuevas imágenes ---"
+            docker-compose up -d --force-recreate
+            echo "--- 3. Limpiando imágenes antiguas que ya no se usan ---"
+            docker image prune -f
+            echo "--- ¡Despliegue completado exitosamente! ---"
