@@ -1,21 +1,17 @@
-# Nombre del workflow que aparecerá en la pestaña "Actions" de GitHub
-name: Deploy to Production VPS
+# Nombre del workflow
+name: Build and Push to Docker Hub
 
-# Define cuándo se ejecutará este workflow
+# Se activa cada vez que se hace un 'push' a la rama 'main'
 on:
-  # Se activa cada vez que se hace un 'push' a la rama 'main'
   push:
     branches: [ "main" ]
 
-# Define los trabajos (jobs) que se ejecutarán
+# Trabajos a ejecutar
 jobs:
-  build-and-deploy:
-    # El tipo de máquina virtual en la que se ejecutará el job
+  build-and-push:
     runs-on: ubuntu-latest
-
-    # Los pasos que componen el job
     steps:
-      # 1. Descarga el código de tu repositorio a la máquina virtual de GitHub
+      # 1. Descarga el código
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -23,11 +19,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 3. Inicia sesión en Docker Hub usando secrets
+      # 3. Inicia sesión en Docker Hub usando los secrets
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }} # CAMBIO AQUÍ
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # 4. Construye y empuja la imagen del Backend
@@ -36,7 +32,7 @@ jobs:
         with:
           context: ./Backend
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tienda-backend:latest # CAMBIO AQUÍ
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tienda-backend:latest
 
       # 5. Construye y empuja la imagen del E-commerce
       - name: Build and push E-commerce
@@ -44,7 +40,7 @@ jobs:
         with:
           context: ./frontend-ecommerce
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tienda-ecommerce:latest # CAMBIO AQUÍ
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tienda-ecommerce:latest
           build-args: |
             NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
 
@@ -54,24 +50,9 @@ jobs:
         with:
           context: ./frontend-dashboard
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tienda-dashboard:latest # CAMBIO AQUÍ
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tienda-dashboard:latest
           build-args: |
             API_URL=https://miscelaneasdavid.shop/api
 
-      # 7. Despliega en el VPS usando SSH (con versión fijada para estabilidad)
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          script: |
-            echo "--- Conectado al VPS. Iniciando despliegue... ---"
-            cd ~/proyecto_prueba
-            echo "--- 1. Descargando las imágenes más recientes de Docker Hub ---"
-            docker-compose pull
-            echo "--- 2. Reiniciando los servicios con las nuevas imágenes ---"
-            docker-compose up -d --force-recreate
-            echo "--- 3. Limpiando imágenes antiguas que ya no se usan ---"
-            docker image prune -f
-            echo "--- ¡Despliegue completado exitosamente! ---"
+      # --- ¡LA SECCIÓN DE SSH HA SIDO ELIMINADA! ---
+      # Ya no necesitamos conectarnos al VPS.
