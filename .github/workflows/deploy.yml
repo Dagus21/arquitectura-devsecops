@@ -1,20 +1,26 @@
-name: Build, Push, and Deploy
+# Nombre descriptivo del workflow
+name: Build, Push, and Deploy with Secure Webhook
 
+# Se activa en cada push a la rama 'main'
 on:
   push:
     branches: [ "main" ]
 
 jobs:
   build-and-push:
+    # El tipo de máquina virtual donde se ejecutará
     runs-on: ubuntu-latest
+    # Permisos necesarios para que el job pueda escribir en el GitHub Container Registry
     permissions:
       contents: read
       packages: write
 
     steps:
+      # 1. Descarga el código del repositorio
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. OPTIMIZACIÓN: Restaura la caché de las dependencias de Maven
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
@@ -22,6 +28,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      # 3. OPTIMIZACIÓN: Restaura la caché de las dependencias de Bun (Node.js)
       - name: Cache Bun packages
         uses: actions/cache@v4
         with:
@@ -29,10 +36,16 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
           restore-keys: ${{ runner.os }}-bun-
 
+      # 4. Genera una variable con tu nombre de usuario de GitHub en minúsculas
       - name: Generate lower case owner name
         id: strings
         run: echo "owner_lc=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
+      # 5. Configura Docker Buildx, el motor de construcción de Docker
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 6. Inicia sesión en el GitHub Container Registry (GHCR)
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -40,6 +53,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 7. Construye y sube la imagen del Backend a GHCR
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
@@ -47,6 +61,7 @@ jobs:
           push: true
           tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-backend:latest
 
+      # 8. Construye y sube la imagen del E-commerce a GHCR
       - name: Build and push E-commerce
         uses: docker/build-push-action@v5
         with:
@@ -56,6 +71,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
 
+      # 9. Construye y sube la imagen del Dashboard a GHCR
       - name: Build and push Dashboard
         uses: docker/build-push-action@v5
         with:
@@ -65,12 +81,17 @@ jobs:
           build-args: |
             API_URL=https://miscelaneasdavid.shop/api
 
-      # --- PASOS FINALES DE DESPLIEGUE DIRECTO ---
+      # --- PASOS FINALES DE DESPLIEGUE SEGURO ---
+      # Llama al "portero inteligente" en el puerto 9000, pasando el secreto en la URL
+
+      # 10. Activa el redespliegue del Backend
       - name: Trigger Backend Redeploy
-        run: curl -X POST "${{ secrets.DOCKPLOY_WEBHOOK_BACKEND }}"
+        run: curl -X POST "http://${{ secrets.VPS_IP }}:9000/hooks/redeploy-backend?secret=${{ secrets.WEBHOOK_SECRET }}"
 
+      # 11. Activa el redespliegue del E-commerce
       - name: Trigger E-commerce Redeploy
-        run: curl -X POST "${{ secrets.DOCKPLOY_WEBHOOK_ECOMMERCE }}"
+        run: curl -X POST "http://${{ secrets.VPS_IP }}:9000/hooks/redeploy-ecommerce?secret=${{ secrets.WEBHOOK_SECRET }}"
 
+      # 12. Activa el redespliegue del Dashboard
       - name: Trigger Dashboard Redeploy
-        run: curl -X POST "${{ secrets.DOCKPLOY_WEBHOOK_DASHBOARD }}"
+        run: curl -X POST "http://${{ secrets.VPS_IP }}:9000/hooks/redeploy-dashboard?secret=${{ secrets.WEBHOOK_SECRET }}"
