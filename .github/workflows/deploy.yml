@@ -15,6 +15,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # --- ¡NUEVO PASO AQUÍ! ---
+      # Creamos una variable de entorno con el nombre del propietario en minúsculas.
+      - name: Set lower case owner name
+        run: echo "OWNER_LC=${{ github.repository_owner,, }}" >> $GITHUB_ENV
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -26,12 +31,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # --- CORREGIDO AQUÍ ---
+      # Ahora usamos la nueva variable de entorno `${{ env.OWNER_LC }}`
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
           context: ./Backend
           push: true
-          tags: ghcr.io/${{ toLower(github.repository_owner) }}/tienda-backend:latest
+          tags: ghcr.io/${{ env.OWNER_LC }}/tienda-backend:latest
 
       # --- CORREGIDO AQUÍ ---
       - name: Build and push E-commerce
@@ -39,7 +45,7 @@ jobs:
         with:
           context: ./frontend-ecommerce
           push: true
-          tags: ghcr.io/${{ toLower(github.repository_owner) }}/tienda-ecommerce:latest
+          tags: ghcr.io/${{ env.OWN-ER_LC }}/tienda-ecommerce:latest
           build-args: |
             NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
 
@@ -49,6 +55,6 @@ jobs:
         with:
           context: ./frontend-dashboard
           push: true
-          tags: ghcr.io/${{ toLower(github.repository_owner) }}/tienda-dashboard:latest
+          tags: ghcr.io/${{ env.OWNER_LC }}/tienda-dashboard:latest
           build-args: |
             API_URL=https://miscelaneasdavid.shop/api
