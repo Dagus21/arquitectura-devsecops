@@ -86,12 +86,12 @@ jobs:
 
       # 10. Activa el redespliegue del Backend
       - name: Trigger Backend Redeploy
-        run: curl -X POST "http://${{ secrets.VPS_IP }}:9000/hooks/redeploy-backend?secret=${{ secrets.WEBHOOK_SECRET }}"
+        run: curl -X POST 'http://${{ secrets.VPS_IP }}:9000/hooks/redeploy-backend?secret=${{ secrets.WEBHOOK_SECRET }}'
 
       # 11. Activa el redespliegue del E-commerce
       - name: Trigger E-commerce Redeploy
-        run: curl -X POST "http://${{ secrets.VPS_IP }}:9000/hooks/redeploy-ecommerce?secret=${{ secrets.WEBHOOK_SECRET }}"
+        run: curl -X POST 'http://${{ secrets.VPS_IP }}:9000/hooks/redeploy-ecommerce?secret=${{ secrets.WEBHOOK_SECRET }}'
 
       # 12. Activa el redespliegue del Dashboard
       - name: Trigger Dashboard Redeploy
-        run: curl -X POST "http://${{ secrets.VPS_IP }}:9000/hooks/redeploy-dashboard?secret=${{ secrets.WEBHOOK_SECRET }}"
+        run: curl -X POST 'http://${{ secrets.VPS_IP }}:9000/hooks/redeploy-dashboard?secret=${{ secrets.WEBHOOK_SECRET }}'
