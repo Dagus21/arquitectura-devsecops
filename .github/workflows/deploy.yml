@@ -15,10 +15,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # --- ¡NUEVO PASO AQUÍ! ---
-      # Creamos una variable de entorno con el nombre del propietario en minúsculas.
-      - name: Set lower case owner name
-        run: echo "OWNER_LC=${{ github.repository_owner,, }}" >> $GITHUB_ENV
+      # --- PASO CORREGIDO PARA GENERAR EL NOMBRE EN MINÚSCULAS ---
+      - name: Generate lower case owner name
+        id: strings # Le damos un ID a este paso para poder referenciarlo
+        # Usamos 'tr' que es un comando universal para convertir a minúsculas
+        # y lo guardamos como un "output" del paso.
+        run: echo "owner_lc=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -30,31 +32,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # --- CORREGIDO AQUÍ ---
-      # Ahora usamos la nueva variable de entorno `${{ env.OWNER_LC }}`
+      # --- USO CORRECTO DE LA VARIABLE ---
+      # Ahora referenciamos el "output" del paso con id 'strings'
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
           context: ./Backend
           push: true
-          tags: ghcr.io/${{ env.OWNER_LC }}/tienda-backend:latest
+          tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-backend:latest
 
-      # --- CORREGIDO AQUÍ ---
       - name: Build and push E-commerce
         uses: docker/build-push-action@v5
         with:
           context: ./frontend-ecommerce
           push: true
-          tags: ghcr.io/${{ env.OWN-ER_LC }}/tienda-ecommerce:latest
+          tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-ecommerce:latest
           build-args: |
             NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
 
-      # --- CORREGIDO AQUÍ ---
       - name: Build and push Dashboard
         uses: docker/build-push-action@v5
         with:
           context: ./frontend-dashboard
           push: true
-          tags: ghcr.io/${{ env.OWNER_LC }}/tienda-dashboard:latest
+          tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-dashboard:latest
           build-args: |
             API_URL=https://miscelaneasdavid.shop/api
