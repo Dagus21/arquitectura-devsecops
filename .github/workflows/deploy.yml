@@ -7,7 +7,6 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    # ¡NUEVO! Define los permisos para que el job pueda escribir en el registro de paquetes.
     permissions:
       contents: read
       packages: write
@@ -19,40 +18,37 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # --- ¡CAMBIO CRÍTICO AQUÍ! ---
-      # Ya no iniciamos sesión en Docker Hub. Ahora lo hacemos en GHCR.
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          # GITHUB_TOKEN es un secreto especial que GitHub Actions crea automáticamente.
-          # No necesitas crearlo tú mismo.
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # --- ¡CAMBIO EN LOS NOMBRES DE LAS IMÁGENES! ---
-      # El formato ahora es ghcr.io/TU_USUARIO_GITHUB/NOMBRE_REPO
+      # --- CORREGIDO AQUÍ ---
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
           context: ./Backend
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/tienda-backend:latest
+          tags: ghcr.io/${{ toLower(github.repository_owner) }}/tienda-backend:latest
 
+      # --- CORREGIDO AQUÍ ---
       - name: Build and push E-commerce
         uses: docker/build-push-action@v5
         with:
           context: ./frontend-ecommerce
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/tienda-ecommerce:latest
+          tags: ghcr.io/${{ toLower(github.repository_owner) }}/tienda-ecommerce:latest
           build-args: |
             NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
 
+      # --- CORREGIDO AQUÍ ---
       - name: Build and push Dashboard
         uses: docker/build-push-action@v5
         with:
           context: ./frontend-dashboard
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/tienda-dashboard:latest
+          tags: ghcr.io/${{ toLower(github.repository_owner) }}/tienda-dashboard:latest
           build-args: |
             API_URL=https://miscelaneasdavid.shop/api
