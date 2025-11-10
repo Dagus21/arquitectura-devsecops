@@ -1,58 +1,58 @@
-# Nombre del workflow
-name: Build and Push to Docker Hub
+name: Build and Push to GitHub Container Registry
 
-# Se activa cada vez que se hace un 'push' a la rama 'main'
 on:
   push:
     branches: [ "main" ]
 
-# Trabajos a ejecutar
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # ¡NUEVO! Define los permisos para que el job pueda escribir en el registro de paquetes.
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      # 1. Descarga el código
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Configura Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 3. Inicia sesión en Docker Hub usando los secrets
-      - name: Login to Docker Hub
+      # --- ¡CAMBIO CRÍTICO AQUÍ! ---
+      # Ya no iniciamos sesión en Docker Hub. Ahora lo hacemos en GHCR.
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          # GITHUB_TOKEN es un secreto especial que GitHub Actions crea automáticamente.
+          # No necesitas crearlo tú mismo.
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 4. Construye y empuja la imagen del Backend
+      # --- ¡CAMBIO EN LOS NOMBRES DE LAS IMÁGENES! ---
+      # El formato ahora es ghcr.io/TU_USUARIO_GITHUB/NOMBRE_REPO
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
           context: ./Backend
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tienda-backend:latest
+          tags: ghcr.io/${{ github.repository_owner }}/tienda-backend:latest
 
-      # 5. Construye y empuja la imagen del E-commerce
       - name: Build and push E-commerce
         uses: docker/build-push-action@v5
         with:
           context: ./frontend-ecommerce
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tienda-ecommerce:latest
+          tags: ghcr.io/${{ github.repository_owner }}/tienda-ecommerce:latest
           build-args: |
             NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
 
-      # 6. Construye y empuja la imagen del Dashboard
       - name: Build and push Dashboard
         uses: docker/build-push-action@v5
         with:
           context: ./frontend-dashboard
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tienda-dashboard:latest
+          tags: ghcr.io/${{ github.repository_owner }}/tienda-dashboard:latest
           build-args: |
             API_URL=https://miscelaneasdavid.shop/api
-
-      # --- ¡LA SECCIÓN DE SSH HA SIDO ELIMINADA! ---
-      # Ya no necesitamos conectarnos al VPS.
