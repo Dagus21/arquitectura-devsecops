@@ -15,11 +15,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # --- PASO CORREGIDO PARA GENERAR EL NOMBRE EN MINÚSCULAS ---
+      # --- OPTIMIZACIÓN: CACHÉ PARA MAVEN ---
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      # --- OPTIMIZACIÓN: CACHÉ PARA BUN (NODE.JS) ---
+      - name: Cache Bun packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      # Genera el nombre del propietario en minúsculas
       - name: Generate lower case owner name
-        id: strings # Le damos un ID a este paso para poder referenciarlo
-        # Usamos 'tr' que es un comando universal para convertir a minúsculas
-        # y lo guardamos como un "output" del paso.
+        id: strings
         run: echo "owner_lc=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
@@ -32,8 +46,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # --- USO CORRECTO DE LA VARIABLE ---
-      # Ahora referenciamos el "output" del paso con id 'strings'
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
