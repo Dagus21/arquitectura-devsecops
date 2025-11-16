@@ -30,6 +30,7 @@ export default function Home() {
     <main>
       <h1>Simulacro de E-commerce (PWA)</h1>
       <p>Abre la consola del desarrollador (F12) para ver los resultados de la llamada a la API.</p>
+      <p>junto con los cambios</p>
     </main>
   );
 }

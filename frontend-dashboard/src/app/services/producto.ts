@@ -14,7 +14,7 @@ export class ProductoService {
 
   // 3. Usa la URL construida para obtener los productos
   getProductos(): Observable<any[]> {
-    console.log(`Pidiendo productos a la URL: ${this.apiUrl}`);
+    // console.log(`Pidiendo productos a la URL: ${this.apiUrl}`);
     return this.http.get<any[]>(this.apiUrl);
   }
 }
