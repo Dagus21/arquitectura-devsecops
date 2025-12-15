@@ -1,26 +1,24 @@
-# Nombre descriptivo del workflow
-name: Build, Push, and Deploy with Secure Webhook
+name: Build, Push, and Deploy (Secure VPN)
 
-# Se activa en cada push a la rama 'main'
+# Se ejecuta solo cuando haces push a la rama 'main'
 on:
   push:
     branches: [ "main" ]
 
 jobs:
   build-and-push:
-    # El tipo de máquina virtual donde se ejecutará
     runs-on: ubuntu-latest
-    # Permisos necesarios para que el job pueda escribir en el GitHub Container Registry
+    # Permisos necesarios para subir paquetes a GHCR
     permissions:
       contents: read
       packages: write
 
     steps:
-      # 1. Descarga el código del repositorio
+      # 1. Descargar el código
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. OPTIMIZACIÓN: Restaura la caché de las dependencias de Maven
+      # 2. Cache para Maven (Backend) - Acelera el build
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
@@ -28,7 +26,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      # 3. OPTIMIZACIÓN: Restaura la caché de las dependencias de Bun (Node.js)
+      # 3. Cache para Bun (Frontends) - Acelera el build
       - name: Cache Bun packages
         uses: actions/cache@v4
         with:
@@ -36,16 +34,16 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
           restore-keys: ${{ runner.os }}-bun-
 
-      # 4. Genera una variable con tu nombre de usuario de GitHub en minúsculas
+      # 4. Preparar nombre de usuario en minúsculas para Docker
       - name: Generate lower case owner name
         id: strings
         run: echo "owner_lc=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
-      # 5. Configura Docker Buildx, el motor de construcción de Docker
+      # 5. Configurar Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 6. Inicia sesión en el GitHub Container Registry (GHCR)
+      # 6. Iniciar sesión en GitHub Container Registry
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -53,7 +51,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 7. Construye y sube la imagen del Backend a GHCR
+      # ----------------------------------------------------------------
+      # CONSTRUCCIÓN DE IMÁGENES (BUILD & PUSH)
+      # ----------------------------------------------------------------
+
+      # 7. Backend (Spring Boot)
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
@@ -61,36 +63,47 @@ jobs:
           push: true
           tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-backend:latest
 
-      # 8. Construye y sube la imagen del E-commerce a GHCR
+      # 8. E-commerce (Next.js)
       - name: Build and push E-commerce
         uses: docker/build-push-action@v5
         with:
           context: ./frontend-ecommerce
           push: true
           tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-ecommerce:latest
+          # Inyectamos la URL pública de la API para que el cliente la use
           build-args: |
             NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
 
-      # 9. Construye y sube la imagen del Dashboard a GHCR
+      # 9. Dashboard (Angular)
       - name: Build and push Dashboard
         uses: docker/build-push-action@v5
         with:
           context: ./frontend-dashboard
           push: true
           tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-dashboard:latest
+          # Inyectamos la URL pública de la API (aunque el dashboard sea privado, el navegador del cliente necesita salir a internet)
           build-args: |
             API_URL=https://miscelaneasdavid.shop/api
 
-      # --- PASOS FINALES DE DESPLIEGUE SEGURO ---
-      # Llama al "portero inteligente" en el puerto 9000, pasando el secreto en la URL
+      # ----------------------------------------------------------------
+      # CONEXIÓN VPN Y DESPLIEGUE SEGURO
+      # ----------------------------------------------------------------
+      
+      # 10. Conectar GitHub Actions a tu red Tailscale
+      # Usa las credenciales OAuth que configuraste
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
 
-      # 10. Activa el redespliegue del Backend
-      - name: Trigger Backend Redeploy
-        run: curl -X POST '${{ secrets.BACKEND_WEBHOOK_URL }}'
-      # 11. Activa el redespliegue del E-commerce
-      - name: Trigger E-commerce Redeploy
-        run: curl -X POST '${{ secrets.ECOMMERCE_WEBHOOK_URL }}'
-
-      # 12. Activa el redespliegue del Dashboard
-      - name: Trigger Dashboard Redeploy
-        run: curl -X POST '${{ secrets.DASHBOARD_WEBHOOK_URL }}'
+      # 11. Llamar a los Webhooks de Dokploy a través del túnel VPN
+      # Como ya actualizaste los secretos con las URLs de Tailscale (https://vmi...ts.net...), esto funcionará directo.
+      - name: Trigger Deployments via VPN
+        run: |
+          curl -X POST '${{ secrets.BACKEND_WEBHOOK_URL }}'
+          curl -X POST '${{ secrets.ECOMMERCE_WEBHOOK_URL }}'
+          curl -X POST '${{ secrets.DASHBOARD_WEBHOOK_URL }}'
+          
+          
