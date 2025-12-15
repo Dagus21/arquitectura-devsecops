@@ -17,7 +17,7 @@ COPY . .
 RUN sed -i "s|__API_URL__|${API_URL}|g" src/app/api-config.ts
 
 # 3. Construimos la aplicación con la URL ya inyectada
-RUN bun run build --base-href /dashboard/
+RUN bun run build --base-href /
 
 
 # ========================================================================
