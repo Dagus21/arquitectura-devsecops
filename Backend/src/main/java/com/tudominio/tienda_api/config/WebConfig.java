@@ -45,7 +45,7 @@ public class WebConfig {
                         // Para desarrollo, permitimos los servidores locales de Next.js (puerto 3000) y Angular (puerto 4200).
                         // ¡IMPORTANTE! Para producción, debes cambiar esto a los dominios reales
                         // de tus frontends, ej: "https://mitienda.com", "https://dashboard.mitienda.com".
-                        .allowedOrigins("http://localhost:3000", "http://localhost:4200","https://tienda.localhost","https://dashboard.localhost")
+                        .allowedOrigins("https://miscelaneasdavid.shop","https://vmi2897387.taila142d4.ts.net:4200")
 
                         // `allowedMethods(...)`: Especifica qué métodos HTTP están permitidos
                         // desde los orígenes permitidos.
