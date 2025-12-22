@@ -106,4 +106,3 @@ jobs:
           curl -k -X POST '${{ secrets.ECOMMERCE_WEBHOOK_URL }}'
           curl -k -X POST '${{ secrets.DASHBOARD_WEBHOOK_URL }}'
           
-          
