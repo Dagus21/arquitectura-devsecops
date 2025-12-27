@@ -1,6 +1,5 @@
-name: Build, Push, and Deploy (Secure VPN)
+name: Build, Push, and Deploy (Secure VPN + SSH)
 
-# Se ejecuta solo cuando haces push a la rama 'main'
 on:
   push:
     branches: [ "main" ]
@@ -8,17 +7,16 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    # Permisos necesarios para subir paquetes a GHCR
     permissions:
       contents: read
       packages: write
 
     steps:
-      # 1. Descargar el código
+      # 1. Checkout del código
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Cache para Maven (Backend) - Acelera el build
+      # 2. Caché Maven (Backend)
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
@@ -26,7 +24,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      # 3. Cache para Bun (Frontends) - Acelera el build
+      # 3. Caché Bun (Frontend)
       - name: Cache Bun packages
         uses: actions/cache@v4
         with:
@@ -34,7 +32,7 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
           restore-keys: ${{ runner.os }}-bun-
 
-      # 4. Preparar nombre de usuario en minúsculas para Docker
+      # 4. Configurar nombres Docker
       - name: Generate lower case owner name
         id: strings
         run: echo "owner_lc=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
@@ -43,7 +41,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 6. Iniciar sesión en GitHub Container Registry
+      # 6. Login en GitHub Registry
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -52,10 +50,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # ----------------------------------------------------------------
-      # CONSTRUCCIÓN DE IMÁGENES (BUILD & PUSH)
+      # CONSTRUCCIÓN (BUILD)
       # ----------------------------------------------------------------
 
-      # 7. Backend (Spring Boot)
+      # 7. Backend
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
@@ -63,34 +61,31 @@ jobs:
           push: true
           tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-backend:latest
 
-      # 8. E-commerce (Next.js)
+      # 8. E-commerce
       - name: Build and push E-commerce
         uses: docker/build-push-action@v5
         with:
           context: ./frontend-ecommerce
           push: true
           tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-ecommerce:latest
-          # Inyectamos la URL pública de la API para que el cliente la use
           build-args: |
             NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
 
-      # 9. Dashboard (Angular)
+      # 9. Dashboard
       - name: Build and push Dashboard
         uses: docker/build-push-action@v5
         with:
           context: ./frontend-dashboard
           push: true
           tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-dashboard:latest
-          # Inyectamos la URL pública de la API (aunque el dashboard sea privado, el navegador del cliente necesita salir a internet)
           build-args: |
             API_URL=https://miscelaneasdavid.shop/api
 
       # ----------------------------------------------------------------
-      # CONEXIÓN VPN Y DESPLIEGUE SEGURO
+      # DESPLIEGUE (DEPLOY)
       # ----------------------------------------------------------------
       
-      # 10. Conectar GitHub Actions a tu red Tailscale
-      # Usa las credenciales OAuth que configuraste
+      # 10. Conectar a VPN (Tailscale) - CRÍTICO: Esto permite llegar a la IP privada
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
@@ -98,11 +93,26 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
 
-      # 11. Llamar a los Webhooks de Dokploy a través del túnel VPN
-      # Como ya actualizaste los secretos con las URLs de Tailscale (https://vmi...ts.net...), esto funcionará directo.
-      - name: Trigger Deployments via VPN
-        run: |
-          curl -k -X POST '${{ secrets.BACKEND_WEBHOOK_URL }}'
-          curl -k -X POST '${{ secrets.ECOMMERCE_WEBHOOK_URL }}'
-          curl -k -X POST '${{ secrets.DASHBOARD_WEBHOOK_URL }}'
+      # 11. Entrar por SSH y Actualizar (Watchtower)
+      # Aquí usamos la llave SSH que configuraste en el Paso 3
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}        # Tu IP de Tailscale (100.x.x.x)
+          username: ${{ secrets.VPS_USER }}    # Tu usuario (david)
+          key: ${{ secrets.SSH_PRIVATE_KEY }}  # Tu llave privada completa
+          script: |
+            echo "🔐 Autenticando Docker en el VPS..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            echo "🚀 Actualizando contenedores con Watchtower..."
+            # Este comando detecta las imágenes nuevas, borra lo viejo y levanta lo nuevo manteniendo la configuración
+            docker run --rm \
+              --volume /var/run/docker.sock:/var/run/docker.sock \
+              containrrr/watchtower \
+              --run-once \
+              --cleanup \
+              backend-compose dashboard-privado ecommerce-compose
+            
+            echo "✅ ¡Actualización completada exitosamente!"
           
