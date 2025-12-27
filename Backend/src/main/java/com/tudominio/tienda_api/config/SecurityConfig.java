@@ -138,7 +138,7 @@ public class SecurityConfig {
             
             // Producción (Público)
             "https://miscelaneasdavid.shop",      // Tu tienda
-            "https://www.miscelaneasdavid.shop",  // Tu tienda con www
+            "https://www.miscelaneasdavid.shop"  // Tu tienda con www
             
             // Producción (Privado / VPN)
             // Este es tu Dashboard accedido vía Tailscale
