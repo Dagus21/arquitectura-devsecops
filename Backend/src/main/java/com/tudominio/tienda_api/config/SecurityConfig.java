@@ -142,7 +142,7 @@ public class SecurityConfig {
             
             // Producción (Privado / VPN)
             // Este es tu Dashboard accedido vía Tailscale
-            "https://vmi2897387.taila142d4.ts.net:4200"
+            //"https://vmi2897387.taila142d4.ts.net:4200"
         ));
         
         // 2. MÉTODOS PERMITIDOS
