@@ -1,12 +1,10 @@
 package com.tudominio.tienda_api.config;
 
-// --- EXPLICACIÓN DE LAS LIBRERÍAS (IMPORTS) ---
 import com.tudominio.tienda_api.config.filter.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-// ¡ESTA ES LA IMPORTACIÓN CLAVE PARA LA LÍNEA DE CORS!
 import org.springframework.security.config.Customizer;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -20,6 +18,10 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -29,48 +31,38 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
 
-    /**
-     * Define la cadena de filtros de seguridad (SecurityFilterChain) que protege nuestras URLs.
-     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults())
+            .cors(Customizer.withDefaults()) // Esto usa el bean corsConfigurationSource de abajo
             .csrf(csrf -> csrf.disable())
-            // ¡¡¡CAMBIO RADICAL AQUÍ!!!
             .authorizeHttpRequests(authorize -> authorize
+                // Rutas públicas
+                .requestMatchers("/api/auth/login", "/api/api-docs/**", "/api/swagger-ui/**", "/api/swagger-ui.html").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
 
-                        // Cambiamos la ruta de v3/api-docs a la nueva
-                        .requestMatchers("/api/auth/login", "/api/api-docs/**", "/api/swagger-ui/**", "/api/swagger-ui.html").permitAll()
+                // === ESTA ES LA LÍNEA QUE FALTABA PARA LAS FOTOS ===
+                .requestMatchers("/api/media/**").hasRole("ADMIN")
 
-                        // ... el resto de tu configuración ...
-                        .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/productos").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/productos/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/productos/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                // Rutas protegidas de productos
+                .requestMatchers(HttpMethod.POST, "/api/productos").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/productos/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/productos/**").hasRole("ADMIN")
+                
+                .anyRequest().authenticated()
             )
-            .sessionManagement(session -> session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
          return http.build();
     }
 
-    /**
-     * Expone el AuthenticationManager de Spring como un Bean para poder inyectarlo
-     * en nuestro AuthController para el proceso de login.
-     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    /**
-     * Define el "Proveedor de Autenticación" que une el UserDetailsService con el PasswordEncoder.
-     */
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -79,11 +71,25 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    /**
-     * Define el codificador de contraseñas que se usará en toda la aplicación.
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+    // === CONFIGURACIÓN CORS DEFINITIVA ===
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // El asterisco permite CUALQUIER origen (Tailscale, Localhost, Dominio Público)
+        configuration.setAllowedOriginPatterns(List.of("*")); 
+        
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
