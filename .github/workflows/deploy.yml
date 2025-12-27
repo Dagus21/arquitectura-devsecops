@@ -102,7 +102,7 @@ jobs:
       # Como ya actualizaste los secretos con las URLs de Tailscale (https://vmi...ts.net...), esto funcionará directo.
       - name: Trigger Deployments via VPN
         run: |
-          curl -k -X POST '${{ secrets.BACKEND_WEBHOOK_URL }}'
-          curl -k -X POST '${{ secrets.ECOMMERCE_WEBHOOK_URL }}'
-          curl -k -X POST '${{ secrets.DASHBOARD_WEBHOOK_URL }}'
+          curl -X POST '${{ secrets.BACKEND_WEBHOOK_URL }}'
+          curl -X POST '${{ secrets.ECOMMERCE_WEBHOOK_URL }}'
+          curl -X POST '${{ secrets.DASHBOARD_WEBHOOK_URL }}'
           
