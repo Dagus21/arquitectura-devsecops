@@ -1,4 +1,4 @@
-name: Build, Push, and Deploy (Secure VPN + SSH)
+name: Build, Push, and Deploy (Clean & Secure)
 
 on:
   push:
@@ -12,11 +12,11 @@ jobs:
       packages: write
 
     steps:
-      # 1. Checkout del código
+      # 1. Checkout
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Caché Maven (Backend)
+      # 2. Caches (Para que compile rápido)
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
@@ -24,7 +24,6 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      # 3. Caché Bun (Frontend)
       - name: Cache Bun packages
         uses: actions/cache@v4
         with:
@@ -32,16 +31,14 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
           restore-keys: ${{ runner.os }}-bun-
 
-      # 4. Configurar nombres Docker
+      # 3. Configuración Docker
       - name: Generate lower case owner name
         id: strings
         run: echo "owner_lc=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
-      # 5. Configurar Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 6. Login en GitHub Registry
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -49,11 +46,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # ----------------------------------------------------------------
-      # CONSTRUCCIÓN (BUILD)
-      # ----------------------------------------------------------------
-
-      # 7. Backend
+      # 4. Construir y Subir Imágenes
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
@@ -61,7 +54,6 @@ jobs:
           push: true
           tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-backend:latest
 
-      # 8. E-commerce
       - name: Build and push E-commerce
         uses: docker/build-push-action@v5
         with:
@@ -71,7 +63,6 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=https://miscelaneasdavid.shop/api
 
-      # 9. Dashboard
       - name: Build and push Dashboard
         uses: docker/build-push-action@v5
         with:
@@ -82,10 +73,10 @@ jobs:
             API_URL=https://miscelaneasdavid.shop/api
 
       # ----------------------------------------------------------------
-      # DESPLIEGUE (DEPLOY)
+      # FASE DE DESPLIEGUE (ESTRATEGIA HÍBRIDA)
       # ----------------------------------------------------------------
       
-      # 10. Conectar a VPN (Tailscale) - CRÍTICO: Esto permite llegar a la IP privada
+      # 5. Conectar a la VPN (Para poder entrar por SSH y llamar a los Webhooks)
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
@@ -93,26 +84,38 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
 
-      # 11. Entrar por SSH y Actualizar (Watchtower)
-      # Aquí usamos la llave SSH que configuraste en el Paso 3
-      - name: Deploy via SSH
+      # 6. LIMPIEZA Y ACTUALIZACIÓN DE IMÁGENES (Vía SSH)
+      # Esto garantiza que el servidor tenga SÍ o SÍ la última versión antes de reiniciar.
+      - name: Force Pull New Images
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.VPS_HOST }}        # Tu IP de Tailscale (100.x.x.x)
-          username: ${{ secrets.VPS_USER }}    # Tu usuario (david)
-          key: ${{ secrets.SSH_PRIVATE_KEY }}  # Tu llave privada completa
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "🔐 Autenticando Docker en el VPS..."
+            echo "🔐 1. Autenticando Docker..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            echo "🚀 Actualizando contenedores con Watchtower..."
-            # Este comando detecta las imágenes nuevas, borra lo viejo y levanta lo nuevo manteniendo la configuración
-            docker run --rm \
-              --volume /var/run/docker.sock:/var/run/docker.sock \
-              containrrr/watchtower \
-              --run-once \
-              --cleanup \
-              backend-compose dashboard-privado ecommerce-compose
+            echo "⬇️ 2. Forzando descarga de imágenes nuevas..."
+            docker pull ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-backend:latest
+            docker pull ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-ecommerce:latest
+            docker pull ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-dashboard:latest
             
-            echo "✅ ¡Actualización completada exitosamente!"
+            echo "🧹 3. Limpiando basura (Imágenes viejas)..."
+            docker image prune -f
+
+      # 7. REINICIO DE SERVICIOS (Vía Webhook Seguro)
+      # Al llamar al webhook, Dokploy reiniciará los contenedores.
+      # Como ya hicimos el 'docker pull' arriba, el reinicio tomará la versión nueva instantáneamente.
+      - name: Trigger Dokploy Redeploy
+        run: |
+          echo "🚀 Reiniciando Backend..."
+          curl -k -X POST '${{ secrets.BACKEND_WEBHOOK_URL }}'
           
+          echo "🚀 Reiniciando E-commerce..."
+          curl -k -X POST '${{ secrets.ECOMMERCE_WEBHOOK_URL }}'
+          
+          echo "🚀 Reiniciando Dashboard..."
+          curl -k -X POST '${{ secrets.DASHBOARD_WEBHOOK_URL }}'
+          
+          echo "✅ ¡Despliegue limpio completado!"
