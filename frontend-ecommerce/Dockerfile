@@ -1,46 +1,41 @@
 # ========================================================================
-# ETAPA 1: BUILDER - El Taller de Construcción
-# Usamos la imagen oficial de Bun para compilar nuestro proyecto
+# ETAPA 1: BUILDER - Construcción
 # ========================================================================
 FROM oven/bun:1 AS builder
-# ¡AQUÍ! ¡ESTE ES EL LUGAR CORRECTO!
-# 1. Declara que vamos a recibir un argumento de construcción
+
 ARG NEXT_PUBLIC_API_URL
-# 2. Conviértelo en una variable de entorno para que el build la pueda usar
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-# Establecemos el directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiamos solo los archivos de dependencias para aprovechar el cache de Docker
 COPY package.json bun.lock ./
-
-# Instalamos las dependencias usando Bun (¡mucho más rápido que npm!)
 RUN bun install
 
-# Copiamos el resto del código fuente
 COPY . .
 
-# Ejecutamos el script de build usando Bun
-# Esto creará la carpeta /app/out con nuestro sitio estático
+# IMPORTANTE: Esto requiere que en next.config.ts tengas output: 'standalone'
 RUN bun run build
 
-
 # ========================================================================
-# ETAPA 2: RUNNER - El Servidor Final
-# Usamos una imagen súper ligera de Caddy para servir los archivos
+# ETAPA 2: RUNNER - Servidor Dinámico (SSR)
+# Usamos Bun para ejecutar el servidor de Next.js
 # ========================================================================
-FROM caddy:2-alpine
+FROM oven/bun:1-alpine AS runner
 
-# Copiamos nuestro Caddyfile al lugar donde Caddy lo espera
-COPY Caddyfile /etc/caddy/Caddyfile
+WORKDIR /app
 
-# Copiamos los archivos compilados desde la etapa 'builder' a la carpeta
-# que definimos como raíz en nuestro Caddyfile.
-COPY --from=builder /app/out /usr/share/caddy
+ENV NODE_ENV=production
+# Requerido para que el servidor sepa dónde está la API en tiempo de ejecución
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-# Exponemos el puerto 80, que es donde Caddy escucha
-EXPOSE 80
+# Copiamos solo lo necesario para ejecutar (Standalone mode)
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/.next/standalone ./
 
-# Comando para iniciar el servidor Caddy
-CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
+# Next.js en modo standalone escucha en el 3000 por defecto
+EXPOSE 3000
+
+# Arrancamos el servidor
+CMD ["bun", "run", "server.js"]
