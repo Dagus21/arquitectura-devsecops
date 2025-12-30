@@ -22,78 +22,112 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays; // Importante para listas
-import java.util.List;
+import java.util.Arrays;
 
-@Configuration // Indica que esta clase contiene configuración de Spring (Beans)
-@EnableWebSecurity // Activa la seguridad web de Spring Security en el proyecto
-@RequiredArgsConstructor // Inyecta automáticamente las dependencias 'final' (jwtAuthFilter, userDetailsService)
+/**
+ * CLASE MAESTRA DE SEGURIDAD (SecurityConfig)
+ * ----------------------------------------------------------------
+ * Esta clase es el "Portero" de la aplicación. Configura Spring Security 6+
+ * para manejar autenticación (quién eres) y autorización (qué puedes hacer).
+ * Implementa seguridad Stateless (sin sesiones) basada en Tokens JWT.
+ */
+@Configuration // Marca la clase como fuente de beans para el contexto de Spring.
+@EnableWebSecurity // Habilita la seguridad web y permite personalizar la cadena de filtros.
+@RequiredArgsConstructor // Lombok: Genera constructor para inyectar campos 'final' automáticamente.
 public class SecurityConfig {
 
+    // Inyectamos nuestro filtro personalizado que valida el Token JWT.
     private final JwtAuthFilter jwtAuthFilter;
+    // Inyectamos el servicio que busca usuarios en nuestra base de datos PostgreSQL.
     private final UserDetailsService userDetailsService;
 
     /**
-     * EL GUARDIÁN DE LA PUERTA (SecurityFilterChain)
-     * Este método define las reglas de juego: quién pasa, quién no, y cómo.
+     * CADENA DE FILTROS DE SEGURIDAD (Security Filter Chain)
+     * Define el orden y las reglas que debe atravesar cada petición HTTP.
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // 1. CORS: Activamos el soporte de CORS.
-            // Al poner 'Customizer.withDefaults()', Spring buscará automáticamente un Bean llamado 'corsConfigurationSource' (definido abajo).
+            // 1. CORS (Cross-Origin Resource Sharing)
+            // Permite que navegadores en otros dominios (ej: tu frontend Angular o Next.js)
+            // consuman esta API. Busca automáticamente el bean 'corsConfigurationSource'.
             .cors(Customizer.withDefaults())
 
-            // 2. CSRF (Cross-Site Request Forgery): Lo desactivamos.
-            // ¿Por qué? CSRF es necesario si usas sesiones de servidor (Cookies).
-            // Como usas JWT (Tokens), no es necesario y solo estorbaría.
+            // 2. CSRF (Cross-Site Request Forgery) -> DESACTIVADO
+            // En APIs REST que usan JWT (Stateless), no hay riesgo de CSRF porque no
+            // usamos cookies de sesión para autenticar. Por eso se deshabilita.
             .csrf(csrf -> csrf.disable())
 
-            // 3. REGLAS DE AUTORIZACIÓN (El semáforo)
-            .authorizeHttpRequests(authorize -> authorize
+            // 3. CABECERAS DE SEGURIDAD (Security Headers - OWASP)
+            // Configuraciones para proteger al usuario final en su navegador.
+            .headers(headers -> headers
+                // Anti-Clickjacking: Prohíbe que esta API se cargue dentro de un <iframe>
+                // en otro sitio web malicioso.
+                .frameOptions(frame -> frame.deny())
                 
-                // A. RUTAS PÚBLICAS (Todo el mundo entra)
-                // Login, documentación Swagger y recursos estáticos.
+                // Protección XSS: Desactiva el filtro obsoleto del navegador para delegar
+                // la seguridad en la Content Security Policy (CSP).
+                .xssProtection(xss -> xss.disable())
+                
+                // Content Security Policy (CSP):
+                // Define una "Lista Blanca" de fuentes de contenido confiables.
+                // 'default-src self': Solo permite scripts/estilos del mismo dominio.
+                // 'img-src ...': Permite cargar imágenes desde el propio dominio y desde tu Bucket S3.
+                .contentSecurityPolicy(csp -> csp
+                    .policyDirectives("default-src 'self'; img-src 'self' https://s3.miscelaneasdavid.shop data:; object-src 'none'")
+                )
+                
+                // HSTS (HTTP Strict Transport Security):
+                // Le dice al navegador: "Durante el próximo año (31536000s), NUNCA intentes
+                // conectar por HTTP inseguro. Usa siempre HTTPS".
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .includeSubDomains(true)
+                    .maxAgeInSeconds(31536000)
+                )
+            )
+
+            // 4. REGLAS DE AUTORIZACIÓN (El Semáforo)
+            // Define qué endpoints son públicos y cuáles requieren permisos.
+            .authorizeHttpRequests(authorize -> authorize
+                // A. PÚBLICO: Login y Documentación (Swagger/OpenAPI)
                 .requestMatchers("/api/auth/login", "/api/api-docs/**", "/api/swagger-ui/**", "/api/swagger-ui.html").permitAll()
                 
-                // B. RUTAS DE LECTURA PÚBLICA (Catálogo)
-                // Cualquiera puede ver productos (GET), pero no tocarlos.
+                // B. PÚBLICO: Catálogo de Productos (Cualquiera puede ver qué vendemos)
                 .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
 
-                // C. RUTAS ADMINISTRATIVAS (Solo ADMIN)
-                // Subir fotos (Media).
+                // C. PRIVADO (ADMIN): Subida de archivos multimedia a MinIO
                 .requestMatchers("/api/media/**").hasRole("ADMIN")
-                
-                // Crear, Editar o Borrar productos.
+
+                // D. PRIVADO (ADMIN): Gestión del inventario (Crear, Editar, Borrar)
                 .requestMatchers(HttpMethod.POST, "/api/productos").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/productos/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/productos/**").hasRole("ADMIN")
                 
-                // D. EL RESTO (Candado final)
-                // Cualquier otra ruta no listada arriba, exige estar logueado.
+                // E. CANDADO FINAL: Cualquier otra ruta no especificada arriba requiere
+                // al menos estar autenticado (tener un Token válido).
                 .anyRequest().authenticated()
             )
 
-            // 4. GESTIÓN DE SESIONES
-            // STATELESS: Le decimos a Spring "No guardes memoria del usuario".
-            // Cada petición debe traer su Token. Esto hace la API ligera y escalable.
+            // 5. GESTIÓN DE SESIÓN -> STATELESS
+            // No creamos HttpSession en el servidor (no hay JSESSIONID).
+            // Cada petición es independiente y debe traer su propia credencial (JWT).
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // 5. PROVEEDOR DE AUTENTICACIÓN
-            // Conectamos nuestro sistema de usuarios (Base de Datos) con la seguridad.
+            // 6. PROVEEDOR DE AUTENTICACIÓN
+            // Vincula la lógica de base de datos con Spring Security.
             .authenticationProvider(authenticationProvider())
 
-            // 6. EL FILTRO JWT
-            // Colocamos nuestro filtro "JwtAuthFilter" ANTES del filtro estándar de usuario/contraseña.
-            // Esto permite que si alguien trae un Token válido, entre directo.
+            // 7. FILTRO JWT
+            // Insertamos nuestro filtro personalizado ANTES del filtro estándar de usuario/pass.
+            // Si el JWT es válido, el usuario entra directo sin verificar contraseña de nuevo.
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
          return http.build();
     }
 
     /**
-     * GESTOR DE AUTENTICACIÓN
-     * Es el componente que orquesta el proceso de verificar credenciales.
+     * BEAN: AUTHENTICATION MANAGER
+     * Es el componente que orquesta el proceso de login. Lo usamos en AuthController.
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
@@ -101,62 +135,67 @@ public class SecurityConfig {
     }
 
     /**
-     * PROVEEDOR DE AUTENTICACIÓN (DAO)
-     * Enseña a Spring Security cómo buscar usuarios en TU base de datos y cómo verificar contraseñas.
+     * BEAN: AUTHENTICATION PROVIDER
+     * Enseña a Spring Security CÓMO verificar la identidad:
+     * 1. Usando 'userDetailsService' para buscar el usuario en BD.
+     * 2. Usando 'passwordEncoder' para comparar el hash de la contraseña.
      */
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService); // Tu servicio para buscar en BD
-        authProvider.setPasswordEncoder(passwordEncoder());    // Tu encriptador
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
     /**
-     * ENCRIPTADOR DE CONTRASEÑAS
-     * BCrypt es el estándar actual. Nunca guardamos contraseñas en texto plano.
+     * BEAN: PASSWORD ENCODER
+     * Algoritmo de encriptación. Usamos BCrypt, que es el estándar actual de la industria.
+     * Nunca guardamos contraseñas en texto plano.
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
-    // ========================================================================
-    //              CONFIGURACIÓN CORS (Lista Blanca de Accesos)
-    // ========================================================================
+    /**
+     * BEAN: CONFIGURACIÓN CORS (Lista Blanca)
+     * Define qué dominios externos tienen permiso para hablar con el Backend.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // 1. ORÍGENES PERMITIDOS (Lista Blanca)
-        // Aquí definimos EXACTAMENTE quién puede llamar a tu API.
-        // Si un hacker hace una web falsa 'robatusdatos.com' e intenta llamar a tu API, el navegador lo bloqueará.
+        // 1. ORÍGENES PERMITIDOS
+        // Solo aceptamos peticiones que vengan de estas direcciones exactas.
+        // Esto previene que sitios maliciosos consuman tu API desde el navegador del usuario.
         configuration.setAllowedOrigins(Arrays.asList(
-            // Desarrollo Local
-            "http://localhost:3000", // Next.js Local
-            "http://localhost:4200", // Angular Local
+            // Entorno de Desarrollo Local
+            "http://localhost:3000", // Frontend E-commerce
+            "http://localhost:4200", // Frontend Dashboard
             
-            // Producción (Público)
-            "https://miscelaneasdavid.shop",      // Tu tienda
-            "https://www.miscelaneasdavid.shop", // Tu tienda con www
+            // Entorno de Producción (Público)
+            "https://miscelaneasdavid.shop",      // Tienda oficial
+            "https://www.miscelaneasdavid.shop",  // Tienda con www
             
-            // Producción (Privado / VPN)
-            // Este es tu Dashboard accedido vía Tailscale
+            // Entorno de Producción (Privado / VPN)
+            // Necesario para que tú puedas administrar la tienda desde Tailscale.
             "https://vmi2897387.taila142d4.ts.net:4200"
         ));
         
-        // 2. MÉTODOS PERMITIDOS
+        // 2. MÉTODOS HTTP PERMITIDOS
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         
         // 3. CABECERAS PERMITIDAS
-        // Permitimos enviar Tokens (Authorization) y tipos de contenido (Content-Type)
+        // Authorization: Para enviar el Token Bearer.
+        // Content-Type: Para enviar JSON.
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         
-        // 4. CREDENTIALS
-        // Permitir envío de cookies o credenciales si fuera necesario en el futuro
+        // 4. CREDENCIALES
+        // Permite envío de cookies si fuera necesario en el futuro.
         configuration.setAllowCredentials(true);
 
-        // Registramos esta configuración para TODAS las rutas (/**)
+        // Aplica esta configuración a TODAS las rutas (/**) de la API.
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
