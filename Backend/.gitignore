@@ -33,3 +33,9 @@ build/
 .vscode/
 
 *.save
+
+# ==================================
+# Configuración Local y Secretos
+# ==================================
+start_dev.ps1
+docker-compose.dev.yml
