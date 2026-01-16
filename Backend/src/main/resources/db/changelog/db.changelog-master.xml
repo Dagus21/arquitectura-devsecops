@@ -7,5 +7,7 @@
 
     <!-- Aquí incluiremos nuestros archivos de cambios -->
     <include file="db/changelog/001-crear-tablas-iniciales.sql"/>
+    <include file="db/changelog/002-implementar-erd-completo.sql"/>
+
 
 </databaseChangeLog>

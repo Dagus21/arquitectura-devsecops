@@ -20,7 +20,6 @@ COPY src ./src
 # Compilamos la aplicación y la empaquetamos en un .jar, saltando las pruebas
 RUN ./mvnw package -DskipTests
 
-
 # ========================================================================
 # ETAPA 2: LA "CAJA DE ENVÍO" FINAL (RUNNER)
 # Usamos una imagen mucho más pequeña, solo con el entorno de ejecución de Java (JRE).
