@@ -90,8 +90,19 @@ public class SecurityConfig {
             // Define qué endpoints son públicos y cuáles requieren permisos.
             .authorizeHttpRequests(authorize -> authorize
                 // A. PÚBLICO: Login y Documentación (Swagger/OpenAPI)
-                .requestMatchers("/api/auth/login", "/api/api-docs/**", "/api/swagger-ui/**", "/api/swagger-ui.html").permitAll()
-                
+                .requestMatchers(
+                    "/api/auth/login",
+                    
+                    // Rutas personalizadas que definiste en application.properties
+                    "/api/api-docs/**",
+                    "/api/swagger-ui/**",
+                    "/api/swagger-ui.html",
+                    
+                    // Rutas NATIVAS de Swagger (IMPORTANTE: Esto arregla el error 403)
+                    "/swagger-ui/**", 
+                    "/v3/api-docs/**",
+                    "/swagger-ui.html"
+                ).permitAll()
                 // B. PÚBLICO: Catálogo de Productos (Cualquiera puede ver qué vendemos)
                 .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
 
