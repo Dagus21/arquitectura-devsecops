@@ -38,4 +38,5 @@ build/
 # Configuración Local y Secretos
 # ==================================
 start_dev.ps1
+stop_dev.ps1
 docker-compose.dev.yml
