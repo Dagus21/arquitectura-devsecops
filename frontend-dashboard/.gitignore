@@ -42,7 +42,5 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-# Ignorar configuración generada dinámicamente
-src/app/core/config/api.config.ts
 # ignorar archivo de desarrollo local
 strart_dev.ps1
