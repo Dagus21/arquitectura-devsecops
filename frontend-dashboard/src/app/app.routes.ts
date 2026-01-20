@@ -1,10 +1,24 @@
-// src/app/app.routes.ts
 import { Routes } from '@angular/router';
-import { AppComponent } from './app'; // O './app' si tu archivo se llama app.ts
+import { LoginComponent } from './features/auth/login/login.component';
+import { DashboardComponent } from './features/dashboard/dashboard';
+import { authGuard } from './core/guards/auth.guard'; // Importar Guard
+import {ProductListComponent} from './features/inventory/product-list/product-list'
+
 
 export const routes: Routes = [
-    // Esta es la línea clave. Le dice a Angular que cuando estés en la
-    // ruta principal, cargue el AppComponent.
-    // { path: '', component: AppComponent } 
-    // Si ya tienes otras rutas, déjalas, pero asegúrate de que la ruta vacía esté configurada.
+    { path: 'login', component: LoginComponent },
+    
+    // RUTA PROTEGIDA
+    { 
+        path: 'dashboard', 
+        component: DashboardComponent,
+        canActivate: [authGuard],
+        children: [
+            { path: '', redirectTo: 'products', pathMatch: 'full' },
+            { path: 'products', component: ProductListComponent } // <--- ESTO CARGA LA TABLA
+        ]
+    },
+
+    { path: '', redirectTo: 'login', pathMatch: 'full' },
+    { path: '**', redirectTo: 'login' } // Cualquier ruta desconocida va al login
 ];

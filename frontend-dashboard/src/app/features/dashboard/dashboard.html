@@ -1,0 +1,53 @@
+<div class="min-h-screen flex flex-col bg-slate-50">
+    
+    <!-- Barra Superior (Toolbar) -->
+    <p-toolbar class="bg-white border-none shadow-sm px-6 py-3">
+        <div class="p-toolbar-group-start">
+            <span class="text-xl font-bold text-gray-800">
+                🛍️ Tienda Omnilocal
+            </span>
+        </div>
+        
+        <div class="p-toolbar-group-end gap-3">
+            <div class="flex items-center gap-2 mr-4">
+                <p-avatar icon="pi pi-user" class="mr-2" shape="circle"></p-avatar>
+                <span class="font-medium text-sm">Administrador</span>
+            </div>
+            
+            <p-button 
+                label="Salir" 
+                icon="pi pi-power-off" 
+                severity="danger" 
+                [text]="true" 
+                (onClick)="logout()">
+            </p-button>
+        </div>
+    </p-toolbar>
+
+    <!-- Contenido Principal -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Menú Lateral (Sidebar Simple) -->
+        <aside class="w-64 bg-white shadow-md hidden md:block z-10">
+            <nav class="p-4 flex flex-col gap-2">
+                <a class="p-3 rounded hover:bg-slate-100 flex items-center gap-3 text-gray-700 cursor-pointer font-medium bg-blue-50 text-blue-600">
+                    <i class="pi pi-box"></i> Productos
+                </a>
+                <a class="p-3 rounded hover:bg-slate-100 flex items-center gap-3 text-gray-600 cursor-pointer">
+                    <i class="pi pi-shopping-cart"></i> Ventas
+                </a>
+                <a class="p-3 rounded hover:bg-slate-100 flex items-center gap-3 text-gray-600 cursor-pointer">
+                    <i class="pi pi-users"></i> Usuarios
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Área de Trabajo (Donde se cargarán las tablas) -->
+        <main class="flex-1 p-6 overflow-auto">
+            <div class="bg-white rounded-lg shadow p-6 min-h-full">
+                <h1 class="text-2xl font-bold mb-4">Panel de Productos</h1>
+                <router-outlet></router-outlet> <!-- Aquí se renderizarán los hijos -->
+            </div>
+        </main>
+    </div>
+</div>

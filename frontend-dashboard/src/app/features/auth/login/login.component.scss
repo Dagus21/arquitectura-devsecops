@@ -1,0 +1,22 @@
+/* 
+   Como usamos Tailwind, no necesitamos mucho aquí.
+   Pero a veces es necesario forzar el ancho de ciertos componentes de PrimeNG
+   que generan elementos anidados.
+*/
+
+:host ::ng-deep {
+    // Forzar que la tarjeta de PrimeNG no tenga bordes extraños
+    .p-card {
+        @apply border-none;
+    }
+
+    // Asegurar que el botón dentro del componente p-button ocupe el 100%
+    .p-button {
+        width: 100%;
+    }
+    
+    // Asegurar que el input del password ocupe el 100%
+    .p-password {
+        width: 100%;
+    }
+}
