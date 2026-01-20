@@ -1,0 +1,28 @@
+:host ::ng-deep {
+    // Ajuste fino para la tabla de PrimeNG
+    .p-datatable {
+        .p-datatable-header {
+            background: white;
+            border-top: 1px solid #e5e7eb; // gray-200
+            padding: 1rem;
+        }
+
+        // Centrar verticalmente el contenido de las celdas
+        .p-datatable-tbody > tr > td {
+            vertical-align: middle;
+            padding: 1rem;
+        }
+
+        // Estilo para el encabezado de las columnas
+        .p-datatable-thead > tr > th {
+            background-color: #f9fafb; // gray-50
+            color: #374151; // gray-700
+            font-weight: 600;
+        }
+    }
+
+    // Ajuste para las imágenes (evitar que se deformen)
+    img {
+        display: block;
+    }
+}

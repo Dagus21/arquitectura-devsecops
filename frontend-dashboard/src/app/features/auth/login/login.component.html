@@ -1,0 +1,46 @@
+<div class="min-h-screen flex items-center justify-center bg-slate-100 p-4">
+    <p-card header="Bienvenido Admin" class="w-full sm:w-[400px] shadow-xl block">
+        <p class="text-gray-500 mb-6 mt-0">Ingresa tus credenciales.</p>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
+            
+            <!-- CORRECCIÓN AQUÍ: Usamos proyección de contenido {{ variable }} -->
+            @if (errorMessage) {
+                <p-message severity="error" class="w-full mb-2 block">
+                    {{ errorMessage }}
+                </p-message>
+            }
+
+            <!-- EMAIL -->
+            <p-floatLabel>
+                <input pInputText id="username" formControlName="username" class="w-full" />
+                <label for="username">Correo Electrónico</label>
+            </p-floatLabel>
+            
+            <!-- Errores de Email -->
+            @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
+                <small class="text-red-500">Ingresa un correo válido.</small>
+            }
+
+            <!-- PASSWORD -->
+            <p-floatLabel>
+                <p-password 
+                    id="password" 
+                    formControlName="password" 
+                    [feedback]="false" 
+                    [toggleMask]="true"
+                    class="w-full block" 
+                    [inputStyle]="{'width':'100%'}"> 
+                </p-password>
+                <label for="password">Contraseña</label>
+            </p-floatLabel>
+
+            <!-- Errores de Password -->
+            @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+                <small class="text-red-500">La contraseña es requerida.</small>
+            }
+
+            <p-button label="Iniciar Sesión" type="submit" [loading]="isLoading" [disabled]="loginForm.invalid" class="w-full block"></p-button>
+        </form>
+    </p-card>
+</div>

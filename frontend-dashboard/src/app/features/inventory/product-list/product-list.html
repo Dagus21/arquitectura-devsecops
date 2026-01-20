@@ -1,0 +1,122 @@
+<div class="card">
+    
+    <!-- Tabla de PrimeNG -->
+    <p-table 
+        [value]="products" 
+        [tableStyle]="{ 'min-width': '50rem' }"
+        [paginator]="true"
+        [rows]="5"
+        [loading]="isLoading"
+        [rowsPerPageOptions]="[5, 10, 20]"
+        class="p-datatable-sm shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+        
+        <!-- Encabezado de la Tabla (Título y Buscador) -->
+        <ng-template pTemplate="caption">
+            <div class="flex items-center justify-between flex-wrap gap-4 p-2">
+                <h2 class="text-xl font-bold m-0 text-gray-800">Inventario</h2>
+                
+                <div class="flex gap-2">
+                    <p-button 
+                        label="Nuevo" 
+                        icon="pi pi-plus" 
+                        size="small">
+                    </p-button>
+                </div>
+            </div>
+        </ng-template>
+
+        <!-- Cabeceras de Columnas -->
+        <ng-template pTemplate="header">
+            <tr class="bg-gray-50">
+                <th style="width: 10%">Imagen</th>
+                <th pSortableColumn="nombre" style="width: 25%">
+                    Producto <p-sortIcon field="nombre"></p-sortIcon>
+                </th>
+                <th pSortableColumn="precioVenta" style="width: 15%">
+                    Precio <p-sortIcon field="precioVenta"></p-sortIcon>
+                </th>
+                <th pSortableColumn="stock" style="width: 15%">
+                    Stock <p-sortIcon field="stock"></p-sortIcon>
+                </th>
+                <th style="width: 15%">Estado</th>
+                <th style="width: 20%">Acciones</th>
+            </tr>
+        </ng-template>
+
+        <!-- Filas de Datos (Iteración) -->
+        <ng-template pTemplate="body" let-product>
+            <tr class="hover:bg-gray-50 transition-colors">
+                
+                <!-- Columna Imagen -->
+                <td>
+                    <div class="w-12 h-12 rounded border border-gray-200 overflow-hidden bg-white">
+                        <img 
+                            [src]="product.imagenUrl" 
+                            [alt]="product.nombre" 
+                            class="w-full h-full object-cover" 
+                            onerror="this.src='https://via.placeholder.com/50?text=No+Img'" />
+                    </div>
+                </td>
+
+                <!-- Columna Nombre y SKU -->
+                <td>
+                    <div class="flex flex-col">
+                        <span class="font-medium text-gray-800">{{ product.nombre }}</span>
+                        <span class="text-xs text-gray-500">{{ product.idReferencia }}</span>
+                    </div>
+                </td>
+
+                <!-- Columna Precio -->
+                <td class="font-semibold text-gray-700">
+                    {{ product.precioVenta | currency:'COP':'symbol-narrow':'1.0-0' }}
+                </td>
+
+                <!-- Columna Stock -->
+                <td>
+                    <span [class.text-red-500]="product.stock < 5" [class.font-bold]="product.stock < 5">
+                        {{ product.stock }} u.
+                    </span>
+                </td>
+
+                <!-- Columna Estado -->
+                <td>
+                    <p-tag 
+                        [value]="product.estado" 
+                        [severity]="getSeverity(product.estado)"
+                        [rounded]="true">
+                    </p-tag>
+                </td>
+
+                <!-- Columna Acciones -->
+                <td>
+                    <div class="flex gap-2">
+                        <p-button 
+                            icon="pi pi-pencil" 
+                            [rounded]="true" 
+                            [text]="true" 
+                            severity="info" 
+                            pTooltip="Editar">
+                        </p-button>
+                        <p-button 
+                            icon="pi pi-trash" 
+                            [rounded]="true" 
+                            [text]="true" 
+                            severity="danger" 
+                            pTooltip="Eliminar">
+                        </p-button>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+        
+        <!-- Estado Vacío -->
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="6" class="text-center p-8 text-gray-500">
+                    <i class="pi pi-inbox text-4xl mb-2 block"></i>
+                    No se encontraron productos.
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
