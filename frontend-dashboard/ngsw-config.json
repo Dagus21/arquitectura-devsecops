@@ -26,29 +26,22 @@
       }
     }
   ],
+  
   "dataGroups": [
     {
       "name": "api-data",
       "urls": [
-        "/api/**"
+        "/api/productos/**", 
+        "/api/ventas/**",
+        "/api/usuarios/**"
       ],
       "cacheConfig": {
         "strategy": "freshness",
-        "maxSize": 100,
-        "maxAge": "1h",
-        "timeout": "5s"
-      }
-    },
-    {
-      "name": "external-images",
-      "urls": [
-        "https://s3.miscelaneasdavid.shop/**"
-      ],
-      "cacheConfig": {
-        "strategy": "performance",
-        "maxSize": 500,
-        "maxAge": "7d"
+        "maxSize": 0, 
+        "maxAge": "0u", 
+        "timeout": "2s"
       }
     }
-  ]
+  ],
+  "navigationRequestStrategy": "freshness" 
 }

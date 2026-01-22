@@ -59,12 +59,22 @@ export class LoginComponent {
 
     this.authService.login(credentials).subscribe({
       next: () => {
+        // Solo entra aquí si el Backend respondió 200 OK
         this.isLoading = false;
+        // El servicio redirige
       },
       error: (err) => {
-        console.error('Error login:', err);
         this.isLoading = false;
-        this.errorMessage = 'Credenciales incorrectas.';
+        console.error('Error login:', err);
+        
+        // Mensajes diferenciados
+        if (err.status === 0) {
+            this.errorMessage = 'No hay conexión. Verifica tu VPN/Internet.';
+        } else if (err.status === 403 || err.status === 401) {
+            this.errorMessage = 'Credenciales incorrectas.';
+        } else {
+            this.errorMessage = 'Error del servidor.';
+        }
       }
     });
   }

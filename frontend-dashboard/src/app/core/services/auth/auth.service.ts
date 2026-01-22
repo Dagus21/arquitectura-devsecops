@@ -32,6 +32,11 @@ export class AuthService {
 
   logout() {
     localStorage.removeItem('token');
+     // 2. Limpiar cualquier otra basura (opcional)
+    localStorage.clear(); 
+    // 3. Forzar recarga para limpiar memoria RAM de Angular
+    // Esto evita que variables en memoria se queden con datos viejos
+    window.location.href = '/login';
     this.router.navigate(['/login']);
   }
 
