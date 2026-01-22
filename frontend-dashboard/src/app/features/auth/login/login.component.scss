@@ -1,22 +1,110 @@
-/* 
-   Como usamos Tailwind, no necesitamos mucho aquí.
-   Pero a veces es necesario forzar el ancho de ciertos componentes de PrimeNG
-   que generan elementos anidados.
-*/
-
 :host ::ng-deep {
-    // Forzar que la tarjeta de PrimeNG no tenga bordes extraños
-    .p-card {
-        @apply border-none;
+    
+    // INPUTS: Estilo plano y limpio
+    .custom-input {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0; // Borde gris suave por defecto
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 0.95rem;
+        color: #1e293b;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+        box-shadow: none; // Sin sombras internas
+        
+
+        &::placeholder {
+            color: #cbd5e1;
+        }
+
+        // Hover
+        &:hover {
+            border-color: #94a3b8;
+        }
+
+        // FOCUS: Sin brillo azul, solo borde oscuro elegante
+        &:focus {
+            border-color: #0f172a; // Azul muy oscuro (casi negro)
+            background-color: #ffffff;
+            box-shadow: none !important; // Eliminamos cualquier resplandor
+            outline: none;
+        }
+
+        // ESTADO DE ERROR
+        &.ng-invalid.ng-dirty {
+            border-color: #ef4444 !important;
+            color: #ef4444;
+            
+            &:focus {
+                border-color: #ef4444 !important;
+                box-shadow: none !important;
+            }
+
+            &::placeholder {
+                color: #fca5a5;
+            }
+        }
     }
 
-    // Asegurar que el botón dentro del componente p-button ocupe el 100%
-    .p-button {
-        width: 100%;
-    }
-    
-    // Asegurar que el input del password ocupe el 100%
+    // Ajustes Password
     .p-password {
         width: 100%;
+        input {
+            width: 100%; // Asegurar que el input interno llene el espacio
+        }
     }
+    
+    .p-password-show-icon, .p-password-hide-icon {
+        color: #64748b;
+        right: 1rem;
+        &:hover { color: #0f172a; }
+    }
+
+    // BOTÓN: Arreglo del "Doble Borde"
+    .custom-button {
+        background: #001B4B; // Azul Navy Profundo Sólido
+        border: 1px solid transparent; // Borde transparente para evitar saltos de tamaño
+        border-radius: 8px;
+        padding: 16px;
+        font-weight: 600;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+        color: white;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 27, 75, 0.2);
+        outline: none !important; // Matar outline nativo
+
+        &:enabled:hover {
+            background: #000E29; // Más oscuro al hover
+            transform: translateY(-1px);
+            box-shadow: 0 8px 15px -3px rgba(0, 27, 75, 0.3);
+            border: none;
+        }
+
+        &:enabled:active {
+            transform: translateY(0);
+        }
+
+        // FOCUS: Matar el anillo de PrimeNG
+        &:focus, &:focus-visible {
+            box-shadow: none !important;
+            outline: none !important;
+            border-color: transparent !important;
+        }
+
+        &:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
