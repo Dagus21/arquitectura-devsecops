@@ -1,46 +1,155 @@
-<div class="min-h-screen flex items-center justify-center bg-slate-100 p-4">
-    <p-card header="Bienvenido Admin" class="w-full sm:w-[400px] shadow-xl block">
-        <p class="text-gray-500 mb-6 mt-0">Ingresa tus credenciales.</p>
+<div class="h-screen w-full bg-[#ebf2f8] flex items-center justify-center overflow-hidden p-4">
 
-        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
+    <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-[1100px] h-[650px] max-h-[90vh] flex relative overflow-hidden border border-gray-100">
+
+       <!-- SECCIÓN IZQUIERDA: Azul Profundo con UI Abstracta -->
+        <div class="hidden md:flex w-[54%] relative flex-col justify-between p-12 text-white overflow-hidden z-10 bg-[#000E29]">
             
-            <!-- CORRECCIÓN AQUÍ: Usamos proyección de contenido {{ variable }} -->
-            @if (errorMessage) {
-                <p-message severity="error" class="w-full mb-2 block">
-                    {{ errorMessage }}
-                </p-message>
-            }
-
-            <!-- EMAIL -->
-            <p-floatLabel>
-                <input pInputText id="username" formControlName="username" class="w-full" />
-                <label for="username">Correo Electrónico</label>
-            </p-floatLabel>
+            <!-- 1. FONDO: Gradiente Profundo -->
+            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#020617] via-[#000E29] to-[#001B4B] z-0"></div>
             
-            <!-- Errores de Email -->
-            @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
-                <small class="text-red-500">Ingresa un correo válido.</small>
-            }
+            <!-- 2. DECORACIÓN: Luces Ambientales (Glows) -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+                <div class="absolute top-[-10%] left-[-20%] w-[500px] h-[500px] bg-[#1e3a8a] rounded-full mix-blend-overlay filter blur-[100px] opacity-20"></div>
+                <div class="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-[#172554] rounded-full mix-blend-overlay filter blur-[80px] opacity-30"></div>
+            </div>
 
-            <!-- PASSWORD -->
-            <p-floatLabel>
-                <p-password 
-                    id="password" 
-                    formControlName="password" 
-                    [feedback]="false" 
-                    [toggleMask]="true"
-                    class="w-full block" 
-                    [inputStyle]="{'width':'100%'}"> 
-                </p-password>
-                <label for="password">Contraseña</label>
-            </p-floatLabel>
+            <!-- 3. ARTE CENTRAL: Representación Abstracta del Dashboard (Glassmorphism) -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full flex items-center justify-center z-10 pointer-events-none">
+                
+                <!-- Tarjeta Principal (Simula una ventana del sistema) -->
+                <div class="relative w-64 h-80 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl transform -rotate-6 transition-transform duration-700 hover:-rotate-3">
+                    
+                    <!-- Header de la ventana falsa -->
+                    <div class="absolute top-4 left-4 right-4 h-4 bg-white/10 rounded-full w-1/3"></div>
+                    
+                    <!-- Simulación de Gráfica de Barras (Inventario) -->
+                    <div class="absolute top-12 left-4 right-4 flex items-end gap-2 h-24 border-b border-white/10 pb-2">
+                        <div class="w-1/5 bg-blue-500/40 rounded-t-sm h-[60%]"></div>
+                        <div class="w-1/5 bg-blue-400/40 rounded-t-sm h-[80%]"></div>
+                        <div class="w-1/5 bg-blue-300/40 rounded-t-sm h-[40%]"></div>
+                        <div class="w-1/5 bg-[#250FF3]/60 rounded-t-sm h-[90%] relative shadow-[0_0_15px_rgba(37,15,243,0.5)]"></div> <!-- Barra destacada -->
+                        <div class="w-1/5 bg-blue-400/40 rounded-t-sm h-[50%]"></div>
+                    </div>
 
-            <!-- Errores de Password -->
-            @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
-                <small class="text-red-500">La contraseña es requerida.</small>
-            }
+                    <!-- Simulación de Lista de Items -->
+                    <div class="absolute top-44 left-4 right-4 flex flex-col gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-white/10"></div>
+                            <div class="flex-1 h-2 bg-white/10 rounded full"></div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-white/10"></div>
+                            <div class="flex-1 h-2 bg-white/5 rounded w-2/3"></div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-white/10"></div>
+                            <div class="flex-1 h-2 bg-white/5 rounded w-3/4"></div>
+                        </div>
+                    </div>
+                </div>
 
-            <p-button label="Iniciar Sesión" type="submit" [loading]="isLoading" [disabled]="loginForm.invalid" class="w-full block"></p-button>
-        </form>
-    </p-card>
+                <!-- Tarjeta Flotante Pequeña (Notificación/Éxito) -->
+                <div class="absolute top-[60%] right-[15%] w-32 h-14 bg-[#0f172a]/80 backdrop-blur-md rounded-xl border border-white/10 shadow-xl transform rotate-12 flex items-center gap-3 px-3 animate-pulse-slow">
+                    <div class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
+                        <i class="pi pi-check text-green-400 text-xs font-bold"></i>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <div class="w-12 h-1.5 bg-white/40 rounded-full"></div>
+                        <div class="w-8 h-1.5 bg-white/20 rounded-full"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- OLA DIVISORIA (Se mantiene igual) -->
+            <div class="absolute top-0 -right-[1px] w-24 h-full z-20 pointer-events-none overflow-hidden">
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="w-full h-full">
+                    <path d="M100 0 V100 H50 C 0 70 80 40 20 0 Z" fill="#ffffff"/>
+                </svg>
+            </div>
+
+            <!-- TEXTO SUPERIOR (Branding) -->
+            <div class="relative z-20 w-full">
+                <div class="flex items-center gap-2 mb-2 opacity-70">
+                    <i class="pi pi-chart-bar text-blue-400"></i>
+                    <span class="text-xs font-bold tracking-widest uppercase">Admin Dashboard</span>
+                </div>
+                <h1 class="text-3xl font-bold tracking-tight text-white">Misceláneas <span class="font-light text-blue-200">David</span></h1>
+            </div>
+
+            <!-- FOOTER IZQUIERDO -->
+            <div class="relative z-20 w-full">
+                <p class="text-xs text-blue-200/50 font-light leading-relaxed max-w-[200px]">
+                    Control total de tu negocio. Inventario, ventas y métricas en tiempo real.
+                </p>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DERECHA: Reducida al 52% -->
+        <div class="w-full md:w-[44%] bg-white flex flex-col justify-center p-8 md:pl-8 md:pr-12 z-10 relative">
+            
+            <div class="w-full max-w-sm mx-auto">
+                <div class="mb-8">
+                    <h3 class="text-3xl font-bold text-[#001B4B] mb-2">Bienvenido</h3>
+                    <p class="text-gray-500 text-sm">Por favor, ingresa tus credenciales.</p>
+                </div>
+
+                @if (errorMessage) {
+                    <div class="mb-5 p-3 rounded-lg bg-red-50 border border-red-200 flex items-center gap-3 text-red-600 text-sm animate-fade-in shadow-sm">
+                        <i class="pi pi-exclamation-circle text-lg"></i>
+                        <span class="font-medium">{{ errorMessage }}</span>
+                    </div>
+                }
+
+                <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+                    
+                    <div class="flex flex-col gap-1.5">
+                        <label for="username" class="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Correo Electrónico</label>
+                        <input 
+                            pInputText 
+                            id="username"
+                            formControlName="username" 
+                            class="w-full custom-input" 
+                            [ngClass]="{'ng-invalid ng-dirty': loginForm.get('username')?.invalid && loginForm.get('username')?.touched}"
+                        />
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex justify-between items-center ml-1">
+                            <label for="password" class="text-xs font-bold text-gray-500 uppercase tracking-wider">Contraseña</label>
+                            <a class="text-xs text-[#001B4B] hover:underline cursor-pointer font-semibold transition-colors">
+                                ¿Olvidaste la contraseña?
+                            </a>
+                        </div>
+                        
+                        <p-password 
+                            id="password"
+                            formControlName="password" 
+                            [feedback]="false" 
+                            [toggleMask]="true"
+                            class="w-full"
+                            inputStyleClass="w-full custom-input"
+                            [ngClass]="{'ng-invalid ng-dirty': loginForm.get('password')?.invalid && loginForm.get('password')?.touched}">
+                        </p-password>
+                    </div>
+
+                    <button 
+                        pButton 
+                        pRipple
+                        type="submit" 
+                        label="Ingresar al Sistema" 
+                        [loading]="isLoading" 
+                        [disabled]="loginForm.invalid"
+                        class="w-full mt-4 custom-button">
+                    </button>
+
+                </form>
+
+                <div class="mt-8 text-center">
+                    <p class="text-xs text-gray-300">&copy; 2026 Sistema Omnilocal</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
