@@ -43,4 +43,4 @@ __screenshots__/
 Thumbs.db
 
 # ignorar archivo de desarrollo local
-strart_dev.ps1
+start_dev.ps1
