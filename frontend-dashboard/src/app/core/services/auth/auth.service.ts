@@ -5,6 +5,7 @@ import { LoginRequest, AuthResponse } from '../../models/auth.interface';
 import { tap } from 'rxjs';
 // Importamos la configuración dinámica generada por tu script
 import { API_CONFIG } from '../../config/api.config';
+import { SwUpdate } from '@angular/service-worker';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +13,7 @@ import { API_CONFIG } from '../../config/api.config';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private swUpdate = inject(SwUpdate); 
   
   // Construye la URL usando la configuración inyectada
   private apiUrl = `${API_CONFIG.apiUrl}/auth`; 
@@ -31,13 +33,25 @@ export class AuthService {
   }
 
   logout() {
+    // 1. Borrar Token (Lo que ya tenías)
     localStorage.removeItem('token');
-     // 2. Limpiar cualquier otra basura (opcional)
-    localStorage.clear(); 
-    // 3. Forzar recarga para limpiar memoria RAM de Angular
-    // Esto evita que variables en memoria se queden con datos viejos
+    localStorage.clear();
+
+    // 2. NUEVO: Limpiar cachés del Service Worker si está activo
+    if (this.swUpdate.isEnabled) {
+      caches.keys().then((cacheNames) => {
+        cacheNames.forEach((cacheName) => {
+          // Borrar cachés de la App (pero no necesariamente todos los del navegador)
+          if (cacheName.includes('ngsw')) { 
+            caches.delete(cacheName);
+          }
+        });
+      });
+    }
+
+    // 3. Forzar recarga completa (Hard Reload)
+    // Esto obliga al navegador a re-evaluar si tiene conexión
     window.location.href = '/login';
-    this.router.navigate(['/login']);
   }
 
   getToken(): string | null {
