@@ -32,25 +32,39 @@ export class AuthService {
     );
   }
 
-  logout() {
-    // 1. Borrar Token (Lo que ya tenías)
-    localStorage.removeItem('token');
+  async logout() {
+    // 1. Limpiar Almacenamiento Local (Tokens y datos)
     localStorage.clear();
+    sessionStorage.clear();
 
-    // 2. NUEVO: Limpiar cachés del Service Worker si está activo
-    if (this.swUpdate.isEnabled) {
-      caches.keys().then((cacheNames) => {
-        cacheNames.forEach((cacheName) => {
-          // Borrar cachés de la App (pero no necesariamente todos los del navegador)
-          if (cacheName.includes('ngsw')) { 
-            caches.delete(cacheName);
-          }
-        });
-      });
+    // 2. Limpieza Nuclear de Cachés (Borra TODO lo guardado por este dominio)
+    if ('caches' in window) {
+      try {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames.map(name => {
+            console.log(`🗑️ Borrando caché: ${name}`);
+            return caches.delete(name);
+          })
+        );
+      } catch (err) {
+        console.error('Error limpiando cachés:', err);
+      }
     }
 
-    // 3. Forzar recarga completa (Hard Reload)
-    // Esto obliga al navegador a re-evaluar si tiene conexión
+    // 3. Matar el Service Worker (Desregistrarlo)
+    // Esto evita que siga interceptando peticiones o sirviendo el App Shell
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+        console.log('💀 Service Worker desregistrado');
+      }
+    }
+
+    // 4. Redirección Forzada (Hard Reload)
+    // Usamos location.href en lugar de router para limpiar la memoria RAM de JS
+    // y obligar al navegador a pedir todo de nuevo al servidor.
     window.location.href = '/login';
   }
 

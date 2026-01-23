@@ -5,6 +5,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideServiceWorker } from '@angular/service-worker';
+import { errorInterceptor } from './core/interceptors/error.interceptor';
 
 // 1. IMPORTAR AURA
 import { providePrimeNG } from 'primeng/config';
@@ -32,6 +33,10 @@ export const appConfig: ApplicationConfig = {
     provideServiceWorker('ngsw-worker.js', {
         enabled: !isDevMode(),
         registrationStrategy: 'registerWhenStable:30000'
-    })
+    }),
+    provideHttpClient(withInterceptors([
+        authInterceptor, 
+        errorInterceptor // <--- AGREGAR AQUÍ (El orden importa, ponlo después del auth)
+    ]))
   ]
 };
