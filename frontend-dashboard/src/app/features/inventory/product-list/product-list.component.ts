@@ -25,8 +25,8 @@ import { InputTextModule } from 'primeng/inputtext';
     InputIconModule, 
     InputTextModule
   ],
-  templateUrl: './product-list.html',
-  styleUrls: ['./product-list.scss']
+  templateUrl: './product-list.component.html',
+  styleUrls: ['./product-list.component.scss']
 })
 export class ProductListComponent implements OnInit {
   private productService = inject(ProductService);

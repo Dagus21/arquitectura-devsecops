@@ -12,8 +12,8 @@ import { AvatarModule } from 'primeng/avatar';
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterOutlet, ButtonModule, ToolbarModule, AvatarModule],
-  templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss']
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent {
   private authService = inject(AuthService);

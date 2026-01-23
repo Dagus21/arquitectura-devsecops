@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/login/login.component';
-import { DashboardComponent } from './features/dashboard/dashboard';
+import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { authGuard } from './core/guards/auth.guard'; // Importar Guard
-import {ProductListComponent} from './features/inventory/product-list/product-list'
+import {ProductListComponent} from './features/inventory/product-list/product-list.component'
 
 
 export const routes: Routes = [
