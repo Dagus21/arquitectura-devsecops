@@ -1,13 +1,14 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ToastModule } from 'primeng/toast'; // Importar
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet], // Solo necesitamos el Router
+  imports: [RouterOutlet, ToastModule], // Agregar al array
+  providers: [MessageService], // Proveedor global de mensajes
   templateUrl: './app.html',
   styleUrls: ['./app.scss']
 })
-export class AppComponent {
-  // Ya no necesitamos lógica aquí, el Router se encarga de cargar el Login
-}
+export class AppComponent {}
