@@ -1,12 +1,12 @@
 <!-- CAMBIO 1: 'min-h-screen' en vez de 'h-screen' y quitamos 'overflow-hidden' 
      Agregamos 'py-8' para que si hay scroll, la tarjeta no pegue con los bordes verticales -->
-<div class="min-h-screen w-full bg-[#eef2f6] flex items-center justify-center p-4 py-8">
+<div class="min-h-screen w-full bg-[#eef2f6] flex items-center justify-center p-4 py-8 md:h-screen md:overflow-hidden">
 
    <!-- CAMBIO 2: 
          - 'h-auto': En móvil la altura se adapta al contenido (permite scroll).
          - 'md:h-[650px]': En PC mantiene la altura fija elegante.
          - Quitamos 'max-h-[90vh]' para que no aplaste el contenido en pantallas bajitas. -->
-    <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-[1100px] h-auto md:h-[650px] flex relative overflow-hidden border border-gray-100">
+   <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-[1100px] h-auto md:h-[650px] md:max-h-[90vh] flex relative overflow-hidden border border-gray-100">
 
 
        <!-- SECCIÓN IZQUIERDA: Azul Profundo con UI Abstracta -->
