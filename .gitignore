@@ -48,3 +48,6 @@ dist/
 
 # Windows
 Thumbs.db
+
+# arcihvos de desarrollo locales
+start_dev.ps1
