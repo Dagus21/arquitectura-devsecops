@@ -24,8 +24,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         // Opcional: Si quieres ser estricto y borrar todo cuando cae la VPN,
         // descomenta las siguientes líneas. Si solo quieres avisar, déjalo así.
         
-        const authService = injector.get(AuthService);
-        authService.logout();
+        // const authService = injector.get(AuthService);
+        // authService.logout();
         
       }
 
