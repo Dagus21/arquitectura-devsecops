@@ -1,25 +1,40 @@
 # ==============================================================================
-# SCRIPT DE ARRANQUE FRONTEND (DASHBOARD)
+# SCRIPT DE ARRANQUE FRONTEND (DASHBOARD) - SMART RESTORE
 # ==============================================================================
 
-# 1. Definir la URL del Backend (Cámbiala aquí si es necesario)
-$API_URL = "http://localhost:8080/api"
+# Configuración
+$ConfigPath = "src/app/core/config/api.config.ts"
+$LocalApiUrl = "http://localhost:8080/api"
 
-Write-Host "⚙️  Generando configuración para entorno local..." -ForegroundColor Cyan
-
-# 2. Generar el archivo api.config.ts dinámicamente
-$ConfigContent = @"
+# 1. Definir el contenido TEMPLATE (Lo que debe ir a Producción/Git)
+$TemplateContent = @"
 export const API_CONFIG = {
-  apiUrl: '$API_URL'
+  apiUrl: '__API_URL__'
 };
 "@
 
-# Escribir el archivo en disco (Sobrescribe el existente)
-$ConfigPath = "src/app/core/config/api.config.ts"
-Set-Content -Path $ConfigPath -Value $ConfigContent
+# 2. Definir el contenido LOCAL (Para trabajar en tu PC)
+$LocalContent = @"
+export const API_CONFIG = {
+  apiUrl: '$LocalApiUrl'
+};
+"@
 
-Write-Host "✅ Archivo de configuración generado apuntando a: $API_URL" -ForegroundColor Green
-Write-Host "🚀 Iniciando Angular..." -ForegroundColor Yellow
+Write-Host "⚙️  Configurando entorno local..." -ForegroundColor Cyan
 
-# 3. Iniciar el servidor
-ng serve
+try {
+    # 3. Sobrescribir con la configuración LOCAL
+    Set-Content -Path $ConfigPath -Value $LocalContent
+    Write-Host "✅ api.config.ts apunta a: $LocalApiUrl" -ForegroundColor Green
+    
+    Write-Host "🚀 Iniciando Angular... (Presiona Ctrl+C para detener)" -ForegroundColor Yellow
+    
+    # 4. Iniciar el servidor (El script se queda pausado aquí hasta que canceles)
+    ng serve
+}
+finally {
+    # 5. BLOQUE DE RESTAURACIÓN (Se ejecuta siempre al salir, error o Ctrl+C)
+    Write-Host "`n♻️  Restaurando archivo para Producción (Git)..." -ForegroundColor Magenta
+    Set-Content -Path $ConfigPath -Value $TemplateContent
+    Write-Host "✅ api.config.ts restaurado con el placeholder '__API_URL__'" -ForegroundColor Green
+}
