@@ -135,6 +135,18 @@
 			<artifactId>minio</artifactId>
 			<version>${minio.version}</version>
 		</dependency>
+		<!-- Libreria complementaria para el funcionamiento de peticiones en minIO -->
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>4.12.0</version>
+		</dependency>
+		<!-- AGREGA ESTO: Necesario porque OkHttp usa Kotlin internamente -->
+		<dependency>
+			<groupId>org.jetbrains.kotlin</groupId>
+			<artifactId>kotlin-stdlib</artifactId>
+			<version>1.9.22</version>
+		</dependency>
 
 	</dependencies>
 
