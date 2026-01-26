@@ -59,21 +59,26 @@ export class LoginComponent {
 
     this.authService.login(credentials).subscribe({
       next: () => {
-        // Solo entra aquí si el Backend respondió 200 OK
+        // El token se guarda en el servicio (tap), aquí solo limpiamos carga
         this.isLoading = false;
-        // El servicio redirige
       },
       error: (err) => {
         this.isLoading = false;
         console.error('Error login:', err);
         
-        // Mensajes diferenciados
+        // --- MANEJO DE ERRORES MEJORADO ---
         if (err.status === 0) {
-            this.errorMessage = 'No hay conexión. Verifica tu VPN/Internet.';
+            // ERROR DE CONEXIÓN (VPN Apagada, Sin Internet, CORS, API Caída)
+            this.errorMessage = '⚠️ Sin conexión. Verifica tu VPN o Internet.';
+            
+            // LIMPIEZA DE SEGURIDAD:
+            // Borramos cualquier rastro previo para evitar estados inconsistentes
+            localStorage.clear(); 
+            
         } else if (err.status === 403 || err.status === 401) {
             this.errorMessage = 'Credenciales incorrectas.';
         } else {
-            this.errorMessage = 'Error del servidor.';
+            this.errorMessage = 'Error del servidor. Intenta más tarde.';
         }
       }
     });
