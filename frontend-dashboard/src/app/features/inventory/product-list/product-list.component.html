@@ -1,122 +1,176 @@
 <div class="card">
-    
-    <!-- Tabla de PrimeNG -->
-    <p-table 
-        [value]="products" 
-        [tableStyle]="{ 'min-width': '50rem' }"
-        [paginator]="true"
-        [rows]="5"
-        [loading]="isLoading"
-        [rowsPerPageOptions]="[5, 10, 20]"
-        class="p-datatable-sm shadow-sm border border-gray-200 rounded-lg overflow-hidden">
-        
-        <!-- Encabezado de la Tabla (Título y Buscador) -->
-        <ng-template pTemplate="caption">
-            <div class="flex items-center justify-between flex-wrap gap-4 p-2">
-                <h2 class="text-xl font-bold m-0 text-gray-800">Inventario</h2>
-                
-                <div class="flex gap-2">
-                    <p-button 
-                        label="Nuevo" 
-                        icon="pi pi-plus" 
-                        size="small">
-                    </p-button>
-                </div>
+ <!-- Tabla Principal -->
+  <p-table
+    [value]="products"
+    [tableStyle]="{ 'min-width': '60rem' }"
+    [paginator]="true"
+    [rows]="10"
+    [loading]="isLoading"
+    class="p-datatable-sm"
+    [rowsPerPageOptions]="[5, 10, 20]">
+
+    <ng-template pTemplate="caption">
+      <div class="flex items-center justify-between flex-wrap gap-4 p-2">
+        <h2 class="text-xl font-bold m-0 text-gray-800">Inventario</h2>
+        <div class="flex gap-2">
+          <p-button
+            label="Nuevo"
+            icon="pi pi-plus"
+            size="small"
+            (onClick)="openNew()">
+          </p-button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th style="width: 10%">Imagen</th>
+        <th pSortableColumn="nombre" style="width: 25%">Producto <p-sortIcon field="nombre"></p-sortIcon></th>
+        <th pSortableColumn="precioVenta" style="width: 15%">Precio <p-sortIcon field="precioVenta"></p-sortIcon></th>
+        <th pSortableColumn="stock" style="width: 15%">Stock <p-sortIcon field="stock"></p-sortIcon></th>
+        <th style="width: 15%">Estado</th>
+        <th style="width: 20%">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-product>
+      <tr>
+        <td>
+          <div class="w-12 h-12 rounded border border-gray-200 overflow-hidden bg-white flex items-center justify-center">
+            @if (product.imagenUrl) {
+              <img
+                [src]="product.imagenUrl"
+                [alt]="product.nombre"
+                class="w-full h-full object-cover" />
+            } @else {
+              <i class="pi pi-image text-gray-400 text-xl"></i>
+            }
+          </div>
+        </td>
+        <td>
+          <div class="flex flex-col">
+            <span class="font-medium text-gray-800">{{ product.nombre }}</span>
+            <span class="text-xs text-gray-500">{{ product.idReferencia }}</span>
+          </div>
+        </td>
+        <td class="font-semibold text-gray-700">
+          {{ product.precioVenta | currency:'COP':'symbol-narrow':'1.0-0' }}
+        </td>
+        <td>
+          <span [class.text-red-500]="product.stock < 5" [class.font-bold]="product.stock < 5">
+            {{ product.stock }} u.
+          </span>
+        </td>
+        <td>
+          <p-tag [value]="product.estado" [severity]="getSeverity(product.estado)" [rounded]="true"></p-tag>
+        </td>
+        <td>
+          <div class="flex gap-2">
+            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" pTooltip="Editar"></p-button>
+            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" pTooltip="Eliminar"></p-button>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <!-- ========================================================= -->
+  <!-- DIÁLOGO (MODAL) DE CREACIÓN / EDICIÓN                     -->
+  <!-- ========================================================= -->
+  <p-dialog
+    [(visible)]="productDialog"
+    [style]="{ width: '600px' }"
+    header="Detalles del Producto"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="p-fluid">
+
+    <ng-template pTemplate="content">
+      <form [formGroup]="productForm" class="flex flex-col gap-5 pt-2">
+
+        <!-- 1. SECCIÓN DE IMAGEN -->
+        <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+          <!-- Vista previa -->
+          @if (productForm.get('imagenUrl')?.value) {
+            <div class="w-40 h-40 rounded-lg overflow-hidden border border-gray-200 shadow-sm mb-3 relative">
+              <img [src]="productForm.get('imagenUrl')?.value" class="w-full h-full object-cover">
             </div>
-        </ng-template>
+          }
 
-        <!-- Cabeceras de Columnas -->
-        <ng-template pTemplate="header">
-            <tr class="bg-gray-50">
-                <th style="width: 10%">Imagen</th>
-                <th pSortableColumn="nombre" style="width: 25%">
-                    Producto <p-sortIcon field="nombre"></p-sortIcon>
-                </th>
-                <th pSortableColumn="precioVenta" style="width: 15%">
-                    Precio <p-sortIcon field="precioVenta"></p-sortIcon>
-                </th>
-                <th pSortableColumn="stock" style="width: 15%">
-                    Stock <p-sortIcon field="stock"></p-sortIcon>
-                </th>
-                <th style="width: 15%">Estado</th>
-                <th style="width: 20%">Acciones</th>
-            </tr>
-        </ng-template>
+          <!-- Botón de subida -->
+          <p-fileUpload
+            mode="basic"
+            chooseLabel="Seleccionar Imagen"
+            chooseIcon="pi pi-camera"
+            name="file"
+            accept="image/*"
+            [auto]="true"
+            [customUpload]="true"
+            (uploadHandler)="onUpload($event)"
+            [disabled]="isUploading">
+          </p-fileUpload>
 
-        <!-- Filas de Datos (Iteración) -->
-        <ng-template pTemplate="body" let-product>
-            <tr class="hover:bg-gray-50 transition-colors">
-                
-                <!-- Columna Imagen -->
-                <td>
-                    <div class="w-12 h-12 rounded border border-gray-200 overflow-hidden bg-white">
-                        <img 
-                            [src]="product.imagenUrl" 
-                            [alt]="product.nombre" 
-                            class="w-full h-full object-cover" 
-                            onerror="this.src='https://via.placeholder.com/50?text=No+Img'" />
-                    </div>
-                </td>
+          @if (isUploading) {
+            <small class="text-blue-600 font-medium mt-2">
+              <i class="pi pi-spin pi-spinner mr-1"></i> Subiendo imagen...
+            </small>
+          }
+        </div>
 
-                <!-- Columna Nombre y SKU -->
-                <td>
-                    <div class="flex flex-col">
-                        <span class="font-medium text-gray-800">{{ product.nombre }}</span>
-                        <span class="text-xs text-gray-500">{{ product.idReferencia }}</span>
-                    </div>
-                </td>
+        <!-- 2. DATOS BÁSICOS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="field">
+            <label class="font-bold text-sm mb-1 block">Nombre del Producto</label>
+            <input type="text" pInputText formControlName="nombre" placeholder="Ej: Camiseta Polo" />
+            @if (submitted && productForm.get('nombre')?.invalid) {
+              <small class="text-red-500">Requerido</small>
+            }
+          </div>
+          <div class="field">
+            <label class="font-bold text-sm mb-1 block">Referencia (SKU)</label>
+            <input type="text" pInputText formControlName="idReferencia" placeholder="Ej: CAM-001" />
+            @if (submitted && productForm.get('idReferencia')?.invalid) {
+              <small class="text-red-500">Requerido</small>
+            }
+          </div>
+        </div>
 
-                <!-- Columna Precio -->
-                <td class="font-semibold text-gray-700">
-                    {{ product.precioVenta | currency:'COP':'symbol-narrow':'1.0-0' }}
-                </td>
+        <!-- 3. DESCRIPCIÓN -->
+        <div class="field">
+          <label class="font-bold text-sm mb-1 block">Descripción</label>
+          <textarea pInputTextarea formControlName="descripcion" rows="3" class="w-full" placeholder="Detalles del producto..."></textarea>
+        </div>
 
-                <!-- Columna Stock -->
-                <td>
-                    <span [class.text-red-500]="product.stock < 5" [class.font-bold]="product.stock < 5">
-                        {{ product.stock }} u.
-                    </span>
-                </td>
+        <!-- 4. PRECIOS Y STOCK -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="field">
+            <label class="font-bold text-sm mb-1 block">Costo Compra</label>
+            <p-inputNumber formControlName="precioCompra" mode="currency" currency="COP" locale="es-CO" placeholder="$ 0"></p-inputNumber>
+          </div>
+          <div class="field">
+            <label class="font-bold text-sm mb-1 block">Precio Venta</label>
+            <p-inputNumber formControlName="precioVenta" mode="currency" currency="COP" locale="es-CO" placeholder="$ 0"></p-inputNumber>
+          </div>
+          <div class="field">
+            <label class="font-bold text-sm mb-1 block">Stock Inicial</label>
+            <p-inputNumber formControlName="stock" [min]="0" placeholder="0"></p-inputNumber>
+          </div>
+        </div>
 
-                <!-- Columna Estado -->
-                <td>
-                    <p-tag 
-                        [value]="product.estado" 
-                        [severity]="getSeverity(product.estado)"
-                        [rounded]="true">
-                    </p-tag>
-                </td>
+        <!-- 5. ESTADO -->
+        <div class="field">
+          <label class="font-bold text-sm mb-1 block">Estado</label>
+          <p-select [options]="statuses" formControlName="estado" optionLabel="label" optionValue="value" class="w-full"></p-select>
+        </div>
 
-                <!-- Columna Acciones -->
-                <td>
-                    <div class="flex gap-2">
-                        <p-button 
-                            icon="pi pi-pencil" 
-                            [rounded]="true" 
-                            [text]="true" 
-                            severity="info" 
-                            pTooltip="Editar">
-                        </p-button>
-                        <p-button 
-                            icon="pi pi-trash" 
-                            [rounded]="true" 
-                            [text]="true" 
-                            severity="danger" 
-                            pTooltip="Eliminar">
-                        </p-button>
-                    </div>
-                </td>
-            </tr>
-        </ng-template>
-        
-        <!-- Estado Vacío -->
-        <ng-template pTemplate="emptymessage">
-            <tr>
-                <td colspan="6" class="text-center p-8 text-gray-500">
-                    <i class="pi pi-inbox text-4xl mb-2 block"></i>
-                    No se encontraron productos.
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+      </form>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="hideDialog()"></button>
+      <button pButton pRipple label="Guardar Producto" icon="pi pi-check" class="p-button-primary" (click)="saveProduct()" [loading]="isLoading"></button>
+    </ng-template>
+  </p-dialog>
 </div>
