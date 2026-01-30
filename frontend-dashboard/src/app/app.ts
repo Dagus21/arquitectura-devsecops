@@ -13,14 +13,28 @@ import { ToastModule } from 'primeng/toast'; // Importar
 export class AppComponent implements OnInit {
   
   ngOnInit() {
-    // Lógica de "Autodestrucción" del Service Worker antiguo
+    this.killServiceWorker();
+  }
+
+  async killServiceWorker() {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for (let registration of registrations) {
-          registration.unregister();
-          console.log('🧹 Service Worker antiguo eliminado.');
-        }
-      });
+      // 1. Obtener todos los SW activos
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      
+      for (const registration of registrations) {
+        // 2. Desregistrarlos
+        await registration.unregister();
+        console.log('💀 SW Desregistrado manualmente');
+      }
+    }
+
+    // 3. BORRADO NUCLEAR DE CACHÉ
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      for (const key of keys) {
+        await caches.delete(key);
+        console.log(`🗑️ Caché borrado: ${key}`);
+      }
     }
   }
 }
