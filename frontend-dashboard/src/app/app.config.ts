@@ -10,17 +10,22 @@ import { provideServiceWorker } from '@angular/service-worker';
 // PrimeNG
 import { providePrimeNG } from 'primeng/config';
 import Aura from '@primeng/themes/aura';
-import { MessageService } from 'primeng/api'; // <--- 1. IMPORTAR ESTO
+// 1. IMPORTAR ESTO:
+import { MessageService } from 'primeng/api'; 
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    
     provideAnimationsAsync(),
+    
+    // 2. AGREGAR ESTO EN LA LISTA:
+    MessageService,
 
-    // 2. AGREGAR EL PROVIDER AQUÍ
-    MessageService, 
+    provideHttpClient(withInterceptors([
+        authInterceptor, 
+        errorInterceptor 
+    ])),
 
     providePrimeNG({
         theme: {
@@ -32,14 +37,10 @@ export const appConfig: ApplicationConfig = {
         ripple: true
     }),
 
-    // provideServiceWorker('ngsw-worker.js', {
-    //     enabled: !isDevMode(),
-    //     registrationStrategy: 'registerWhenStable:30000'
-    // }),
-
-    provideHttpClient(withInterceptors([
-        authInterceptor, 
-        errorInterceptor 
-    ]))
+    // Configuración del Service Worker (Desactivado según nuestra estrategia)
+    provideServiceWorker('ngsw-worker.js', {
+        enabled: false,
+        registrationStrategy: 'registerWhenStable:30000'
+    })
   ]
 };
