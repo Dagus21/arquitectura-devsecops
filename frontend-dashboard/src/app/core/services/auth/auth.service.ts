@@ -33,40 +33,25 @@ export class AuthService {
   }
 
   async logout() {
-    // 1. Limpiar Almacenamiento Local (Tokens y datos)
+    // 1. Limpiar Storage
     localStorage.clear();
     sessionStorage.clear();
 
-    // 2. Limpieza Nuclear de Cachés (Borra TODO lo guardado por este dominio)
+    // 2. Limpieza de Cachés (Redundancia de seguridad)
     if ('caches' in window) {
-      try {
-        const cacheNames = await caches.keys();
-        await Promise.all(
-          cacheNames.map(name => {
-            console.log(`🗑️ Borrando caché: ${name}`);
-            return caches.delete(name);
-          })
-        );
-      } catch (err) {
-        console.error('Error limpiando cachés:', err);
-      }
+      const keys = await caches.keys();
+      keys.forEach(key => caches.delete(key));
     }
 
-    // 3. Matar el Service Worker (Desregistrarlo)
-    // Esto evita que siga interceptando peticiones o sirviendo el App Shell
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      for (const registration of registrations) {
-        await registration.unregister();
-        console.log('💀 Service Worker desregistrado');
-      }
-    }
-
-    // 4. Redirección Forzada (Hard Reload)
-    // Usamos location.href en lugar de router para limpiar la memoria RAM de JS
-    // y obligar al navegador a pedir todo de nuevo al servidor.
-    window.location.href = '/login';
+    // 3. CAMBIO CLAVE: Usar el Router de Angular en lugar de recarga forzada
+    // Esto evita la pantalla blanca porque no re-pide el index.html al servidor inmediatamente
+    this.router.navigate(['/login']).then(() => {
+        // Opcional: Recargar la página SOLO si ya estamos en la ruta login
+        // para asegurar que la memoria se limpie, pero ya estando en una ruta segura.
+        window.location.reload();
+    });
   }
+
 
   getToken(): string | null {
     return localStorage.getItem('token');
