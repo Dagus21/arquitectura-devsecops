@@ -5,6 +5,7 @@ import { ProductService } from '../../../core/services/product.service';
 import { MediaService } from '../../../core/services/media.service'; // <--- NUEVO
 import { Product } from '../../../core/models/product.interface';
 import { MessageService } from 'primeng/api';
+import { VpnService } from '../../../core/services/vpn.service';
 
 // --- PrimeNG Imports ---
 import { TableModule } from 'primeng/table';
@@ -49,6 +50,7 @@ export class ProductListComponent implements OnInit {
   private mediaService = inject(MediaService);
   private messageService = inject(MessageService);
   private fb = inject(FormBuilder);
+  private vpnService = inject(VpnService);
 
   products: Product[] = [];
   isLoading = true;
@@ -67,8 +69,33 @@ export class ProductListComponent implements OnInit {
 
   ngOnInit() {
     this.initForm();
-    this.loadProducts();
+    // 1. BLINDAJE DE CARGA INICIAL
+    this.checkVpnAndExecute(() => this.loadProducts());
   }
+
+  // --- MÉTODO REUTILIZABLE (HELPER) ---
+  // Este es el truco para no repetir código. Le pasas una función y él la ejecuta
+  // solo si la VPN está activa.
+  private checkVpnAndExecute(action: () => void) {
+    this.isLoading = true; // Mostramos carga visualmente
+    
+    this.vpnService.checkConnection().subscribe((isConnected) => {
+      if (!isConnected) {
+        this.isLoading = false;
+        this.products = []; // Limpiamos la tabla por seguridad visual
+        this.messageService.add({ 
+            severity: 'error', 
+            summary: 'Modo Restringido', 
+            detail: 'Conexión segura no detectada. Activa tu VPN para ver y gestionar datos.',
+            life: 5000 
+        });
+        return;
+      }
+      // Si está conectado, ejecutamos la acción que nos pidieron
+      action();
+    });
+  }
+
 
   initForm() {
     this.productForm = this.fb.group({
@@ -85,7 +112,7 @@ export class ProductListComponent implements OnInit {
   }
 
   loadProducts() {
-    this.isLoading = true;
+    // Ya no necesitamos poner el loading aquí porque lo maneja el helper o la llamada directa
     this.productService.getProducts().subscribe({
       next: (data) => {
         this.products = data;
@@ -98,12 +125,18 @@ export class ProductListComponent implements OnInit {
     });
   }
 
+  // 2. BLINDAJE DE BOTÓN NUEVO
   openNew() {
-    this.productForm.reset();
-    this.productForm.patchValue({ estado: 'ACTIVO' });
-    this.submitted = false;
-    this.productDialog = true;
+    this.checkVpnAndExecute(() => {
+        // Todo esto solo pasa si hay VPN
+        this.productForm.reset();
+        this.productForm.patchValue({ estado: 'ACTIVO', precioVenta: 0, precioCompra: 0, stock: 0 });
+        this.submitted = false;
+        this.productDialog = true;
+        this.isLoading = false; // Apagamos el loading del chequeo
+    });
   }
+
 
   hideDialog() {
     this.productDialog = false;
