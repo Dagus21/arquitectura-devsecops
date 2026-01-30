@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth/auth.service';
+import { VpnService } from '../../../core/services/vpn.service';
 
 // PrimeNG Imports
 import { ButtonModule } from 'primeng/button';
@@ -34,6 +35,7 @@ import { RippleModule } from 'primeng/ripple';
 export class LoginComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private vpnService = inject(VpnService);
 
   loginForm = this.fb.group({
     username: ['', [Validators.required, Validators.email]],
@@ -52,35 +54,37 @@ export class LoginComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const credentials = {
-        username: this.loginForm.value.username!,
-        password: this.loginForm.value.password!
-    };
-
-    this.authService.login(credentials).subscribe({
-      next: () => {
-        // El token se guarda en el servicio (tap), aquí solo limpiamos carga
+    // 1. PRIMERO VERIFICAMOS LA VPN
+    this.vpnService.checkConnection().subscribe((isConnected) => {
+      if (!isConnected) {
         this.isLoading = false;
-      },
-      error: (err) => {
-        this.isLoading = false;
-        console.error('Error login:', err);
-        
-        // --- MANEJO DE ERRORES MEJORADO ---
-        if (err.status === 0) {
-            // ERROR DE CONEXIÓN (VPN Apagada, Sin Internet, CORS, API Caída)
-            this.errorMessage = '⚠️ Sin conexión. Verifica tu VPN o Internet.';
-            
-            // LIMPIEZA DE SEGURIDAD:
-            // Borramos cualquier rastro previo para evitar estados inconsistentes
-            localStorage.clear(); 
-            
-        } else if (err.status === 403 || err.status === 401) {
-            this.errorMessage = 'Credenciales incorrectas.';
-        } else {
-            this.errorMessage = 'Error del servidor. Intenta más tarde.';
-        }
+        this.errorMessage = '⛔ Acceso Denegado: No se detecta la VPN o Red Privada.';
+        return; // Detenemos todo aquí
       }
+
+      // 2. SI HAY VPN, PROCEDEMOS CON EL LOGIN NORMAL
+      const credentials = {
+          username: this.loginForm.value.username!,
+          password: this.loginForm.value.password!
+      };
+
+      this.authService.login(credentials).subscribe({
+        next: () => {
+          this.isLoading = false;
+        },
+        error: (err) => {
+          this.isLoading = false;
+          // ... tu manejo de errores existente ...
+          if (err.status === 0) {
+             this.errorMessage = '⚠️ Error de conexión con la API.';
+             localStorage.clear();
+          } else if (err.status === 403 || err.status === 401) {
+              this.errorMessage = 'Credenciales incorrectas.';
+          } else {
+              this.errorMessage = 'Error del servidor.';
+          }
+        }
+      });
     });
   }
 }
