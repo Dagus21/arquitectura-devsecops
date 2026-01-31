@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http'; // Importar Headers
 import { Observable, of } from 'rxjs';
 import { catchError, map, timeout } from 'rxjs/operators';
 
@@ -9,20 +9,23 @@ import { catchError, map, timeout } from 'rxjs/operators';
 export class VpnService {
   private http = inject(HttpClient);
 
-  /**
-   * Verifica si tenemos acceso al Servidor Privado (Origin).
-   * Retorna true si la VPN/Red está activa.
-   * Retorna false si no se puede conectar al origen.
-   */
   checkConnection(): Observable<boolean> {
-    // Intentamos obtener el favicon o la raíz del sitio ACTUAL (el privado)
-    // Usamos window.location.origin para que funcione tanto en localhost como en la VPN
-    const privateUrl = window.location.origin + '/favicon.ico';
+    // 1. Agregamos un timestamp (?t=...) para evitar el caché del navegador clásico
+    const privateUrl = `${window.location.origin}/favicon.ico?t=${Date.now()}`;
 
-    return this.http.get(privateUrl, { responseType: 'text' }).pipe(
-      timeout(3000), // Si en 3 segundos no responde, asumimos desconexión
-      map(() => true), // Si responde (lo que sea), hay conexión
-      catchError(() => of(false)) // Si falla (DNS, Timeout), no hay conexión
+    return this.http.get(privateUrl, { 
+      responseType: 'text',
+      // 2. LA CLAVE: Este encabezado le dice al Service Worker de Angular:
+      // "¡Ignórame! Deja pasar esta petición directo a la red".
+      headers: new HttpHeaders({ 'ngsw-bypass': 'true' }) 
+    }).pipe(
+      timeout(3000), 
+      map(() => true), 
+      catchError((err) => {
+        // Tip de depuración: Esto saldrá en la consola remota si usas el método de arriba
+        console.warn('VPN Check falló:', err); 
+        return of(false);
+      }) 
     );
   }
 }
