@@ -5,7 +5,7 @@ import { LoginRequest, AuthResponse } from '../../models/auth.interface';
 import { tap } from 'rxjs';
 // Importamos la configuración dinámica generada por tu script
 import { API_CONFIG } from '../../config/api.config';
-import { SwUpdate } from '@angular/service-worker';
+
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +13,6 @@ import { SwUpdate } from '@angular/service-worker';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private swUpdate = inject(SwUpdate); 
   
   // Construye la URL usando la configuración inyectada
   private apiUrl = `${API_CONFIG.apiUrl}/auth`; 

@@ -54,6 +54,7 @@ export class ProductListComponent implements OnInit {
 
   products: Product[] = [];
   isLoading = true;
+  errorMessage = '';
   
   // Variables del Modal
   productDialog: boolean = false;
@@ -69,33 +70,31 @@ export class ProductListComponent implements OnInit {
 
   ngOnInit() {
     this.initForm();
-    // 1. BLINDAJE DE CARGA INICIAL
     this.checkVpnAndExecute(() => this.loadProducts());
   }
 
   // --- MÉTODO REUTILIZABLE (HELPER) ---
   // Este es el truco para no repetir código. Le pasas una función y él la ejecuta
   // solo si la VPN está activa.
+  
+
   private checkVpnAndExecute(action: () => void) {
-    this.isLoading = true; // Mostramos carga visualmente
-    
+    this.isLoading = true;
+    this.errorMessage = ''; // Limpiamos errores previos
+
     this.vpnService.checkConnection().subscribe((isConnected) => {
       if (!isConnected) {
         this.isLoading = false;
-        this.products = []; // Limpiamos la tabla por seguridad visual
-        this.messageService.add({ 
-            severity: 'error', 
-            summary: 'Modo Restringido', 
-            detail: 'Conexión segura no detectada. Activa tu VPN para ver y gestionar datos.',
-            life: 5000 
-        });
+        this.products = [];
+        // 2. SETEAMOS EL MENSAJE EN LUGAR DE USAR MESSAGE SERVICE
+        this.errorMessage = '⛔ Modo Restringido: Conexión segura no detectada. Activa tu VPN para gestionar el inventario.';
         return;
       }
-      // Si está conectado, ejecutamos la acción que nos pidieron
       action();
     });
   }
 
+  
 
   initForm() {
     this.productForm = this.fb.group({
@@ -112,7 +111,6 @@ export class ProductListComponent implements OnInit {
   }
 
   loadProducts() {
-    // Ya no necesitamos poner el loading aquí porque lo maneja el helper o la llamada directa
     this.productService.getProducts().subscribe({
       next: (data) => {
         this.products = data;
@@ -120,6 +118,8 @@ export class ProductListComponent implements OnInit {
       },
       error: (err) => { 
         this.isLoading = false; 
+        // 3. CAPTURAMOS ERROR DE API TAMBIÉN
+        this.errorMessage = '⚠️ Error de Sincronización: No se pudo cargar el inventario. Revisa tu conexión.';
         console.error(err);
       }
     });
