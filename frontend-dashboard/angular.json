@@ -71,7 +71,10 @@
               "buildTarget": "frontend-dashboard:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "allowedHosts": ["dev-admin.miscelaneasdavid.shop"]
+          }
         },
         "extract-i18n": {
           "builder": "@angular/build:extract-i18n"

@@ -191,7 +191,11 @@ public class SecurityConfig {
             
             // Entorno de Producción (Privado / VPN)
             // Necesario para que tú puedas administrar la tienda desde Tailscale.
-            "https://vmi2897387.taila142d4.ts.net:4200"
+            "https://vmi2897387.taila142d4.ts.net:4200",
+            // dominios de desarrollo del cloudflare tunnel
+            "https://dev-admin.miscelaneasdavid.shop",
+            "https://dev-shop.miscelaneasdavid.shop"
+
         ));
         
         // 2. MÉTODOS HTTP PERMITIDOS

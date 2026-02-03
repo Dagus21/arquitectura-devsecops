@@ -1,79 +1,101 @@
 <div class="card">
- <!-- Tabla Principal -->
-  <p-table
-    [value]="products"
-    [tableStyle]="{ 'min-width': '60rem' }"
-    [paginator]="true"
-    [rows]="10"
-    [loading]="isLoading"
-    class="p-datatable-sm"
-    [rowsPerPageOptions]="[5, 10, 20]">
-
-    <ng-template pTemplate="caption">
-      <div class="flex items-center justify-between flex-wrap gap-4 p-2">
-        <h2 class="text-xl font-bold m-0 text-gray-800">Inventario</h2>
-        <div class="flex gap-2">
-          <p-button
-            label="Nuevo"
-            icon="pi pi-plus"
-            size="small"
-            (onClick)="openNew()">
-          </p-button>
+  <!-- BLOQUE DE ERROR EN LÍNEA (Solo aparece si hay error) -->
+  @if (errorMessage) {
+    <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center flex flex-col items-center gap-3 mb-6 animate-fade-in shadow-sm">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+            <i class="pi pi-wifi text-red-600 text-xl"></i>
         </div>
-      </div>
-    </ng-template>
+        <h3 class="text-red-800 font-bold text-lg m-0">Conexión Interrumpida</h3>
+        <p class="text-red-600 m-0 max-w-md">{{ errorMessage }}</p>
+        
+        <!-- Botón para reintentar -->
+        <button 
+            pButton 
+            label="Reintentar Conexión" 
+            icon="pi pi-refresh" 
+            class="p-button-outlined p-button-danger p-button-sm mt-2" 
+            (click)="ngOnInit()">
+        </button>
+    </div>
+  }
+ <!-- Tabla Principal -->
+  <!-- TABLA DE DATOS (Solo se ve si NO hay error) -->
+  @if (!errorMessage) {
+    <p-table
+      [value]="products"
+      [tableStyle]="{ 'min-width': '60rem' }"
+      [paginator]="true"
+      [rows]="10"
+      [loading]="isLoading"
+      class="p-datatable-sm"
+      [rowsPerPageOptions]="[5, 10, 20]">
 
-    <ng-template pTemplate="header">
-      <tr>
-        <th style="width: 10%">Imagen</th>
-        <th pSortableColumn="nombre" style="width: 25%">Producto <p-sortIcon field="nombre"></p-sortIcon></th>
-        <th pSortableColumn="precioVenta" style="width: 15%">Precio <p-sortIcon field="precioVenta"></p-sortIcon></th>
-        <th pSortableColumn="stock" style="width: 15%">Stock <p-sortIcon field="stock"></p-sortIcon></th>
-        <th style="width: 15%">Estado</th>
-        <th style="width: 20%">Acciones</th>
-      </tr>
-    </ng-template>
-
-    <ng-template pTemplate="body" let-product>
-      <tr>
-        <td>
-          <div class="w-12 h-12 rounded border border-gray-200 overflow-hidden bg-white flex items-center justify-center">
-            @if (product.imagenUrl) {
-              <img
-                [src]="product.imagenUrl"
-                [alt]="product.nombre"
-                class="w-full h-full object-cover" />
-            } @else {
-              <i class="pi pi-image text-gray-400 text-xl"></i>
-            }
-          </div>
-        </td>
-        <td>
-          <div class="flex flex-col">
-            <span class="font-medium text-gray-800">{{ product.nombre }}</span>
-            <span class="text-xs text-gray-500">{{ product.idReferencia }}</span>
-          </div>
-        </td>
-        <td class="font-semibold text-gray-700">
-          {{ product.precioVenta | currency:'COP':'symbol-narrow':'1.0-0' }}
-        </td>
-        <td>
-          <span [class.text-red-500]="product.stock < 5" [class.font-bold]="product.stock < 5">
-            {{ product.stock }} u.
-          </span>
-        </td>
-        <td>
-          <p-tag [value]="product.estado" [severity]="getSeverity(product.estado)" [rounded]="true"></p-tag>
-        </td>
-        <td>
+      <ng-template pTemplate="caption">
+        <div class="flex items-center justify-between flex-wrap gap-4 p-2">
+          <h2 class="text-xl font-bold m-0 text-gray-800">Inventario</h2>
           <div class="flex gap-2">
-            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" pTooltip="Editar"></p-button>
-            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" pTooltip="Eliminar"></p-button>
+            <p-button
+              label="Nuevo"
+              icon="pi pi-plus"
+              size="small"
+              (onClick)="openNew()">
+            </p-button>
           </div>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+        </div>
+      </ng-template>
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 10%">Imagen</th>
+          <th pSortableColumn="nombre" style="width: 25%">Producto <p-sortIcon field="nombre"></p-sortIcon></th>
+          <th pSortableColumn="precioVenta" style="width: 15%">Precio <p-sortIcon field="precioVenta"></p-sortIcon></th>
+          <th pSortableColumn="stock" style="width: 15%">Stock <p-sortIcon field="stock"></p-sortIcon></th>
+          <th style="width: 15%">Estado</th>
+          <th style="width: 20%">Acciones</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-product>
+        <tr>
+          <td>
+            <div class="w-12 h-12 rounded border border-gray-200 overflow-hidden bg-white flex items-center justify-center">
+              @if (product.imagenUrl) {
+                <img
+                  [src]="product.imagenUrl"
+                  [alt]="product.nombre"
+                  class="w-full h-full object-cover" />
+              } @else {
+                <i class="pi pi-image text-gray-400 text-xl"></i>
+              }
+            </div>
+          </td>
+          <td>
+            <div class="flex flex-col">
+              <span class="font-medium text-gray-800">{{ product.nombre }}</span>
+              <span class="text-xs text-gray-500">{{ product.idReferencia }}</span>
+            </div>
+          </td>
+          <td class="font-semibold text-gray-700">
+            {{ product.precioVenta | currency:'COP':'symbol-narrow':'1.0-0' }}
+          </td>
+          <td>
+            <span [class.text-red-500]="product.stock < 5" [class.font-bold]="product.stock < 5">
+              {{ product.stock }} u.
+            </span>
+          </td>
+          <td>
+            <p-tag [value]="product.estado" [severity]="getSeverity(product.estado)" [rounded]="true"></p-tag>
+          </td>
+          <td>
+            <div class="flex gap-2">
+              <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" pTooltip="Editar"></p-button>
+              <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" pTooltip="Eliminar"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
 
   <!-- ========================================================= -->
   <!-- DIÁLOGO (MODAL) DE CREACIÓN / EDICIÓN                     -->
