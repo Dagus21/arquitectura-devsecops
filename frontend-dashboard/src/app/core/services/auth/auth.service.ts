@@ -23,7 +23,6 @@ export class AuthService {
         // YA NO guardamos el token sensible en localStorage.
         // Guardamos una bandera simple solo para saber que estamos logueados (para la UI).
         localStorage.setItem('is_logged_in', 'true');
-        console.log('🔒 Login exitoso. Token gestionado vía Cookie HttpOnly.');
         
         this.router.navigate(['/dashboard']); 
       })
