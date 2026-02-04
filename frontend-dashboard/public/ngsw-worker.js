@@ -1,4 +1,4 @@
-// src/safety-worker.js
+/* SAFETY WORKER - ASESINO DE CACHÉ */
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -6,12 +6,12 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
   
-  // Desregistrar inmediatamente
+  // 1. Desregistrar inmediatamente este Service Worker
   self.registration.unregister().then(() => {
-    console.log('💀 Safety Worker: Service Worker eliminado.');
+    console.log('💀 Safety Worker: Service Worker eliminado correctamente.');
   });
 
-  // Borrar todos los cachés
+  // 2. Borrar TODOS los cachés antiguos
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
