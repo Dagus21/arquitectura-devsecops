@@ -29,7 +29,7 @@ export class DashboardComponent implements OnInit {
   checkConnection() {
     this.http.get(`${API_CONFIG.apiUrl}/productos?limit=1`).subscribe({
       next: () => {
-        console.log('✅ Conexión con API verificada');
+        //console.log('✅ Conexión con API verificada');
       },
       error: (err) => {
         if (err.status === 0) {

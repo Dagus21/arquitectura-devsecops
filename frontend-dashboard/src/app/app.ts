@@ -24,7 +24,7 @@ export class AppComponent implements OnInit {
       for (const registration of registrations) {
         // 2. Desregistrarlos
         await registration.unregister();
-        console.log('💀 SW Desregistrado manualmente');
+        
       }
     }
 
@@ -33,7 +33,7 @@ export class AppComponent implements OnInit {
       const keys = await caches.keys();
       for (const key of keys) {
         await caches.delete(key);
-        console.log(`🗑️ Caché borrado: ${key}`);
+        
       }
     }
   }
