@@ -6,14 +6,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -25,61 +22,60 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 
 /**
- * CLASE MAESTRA DE SEGURIDAD (SecurityConfig)
- * ----------------------------------------------------------------
- * Esta clase es el "Portero" de la aplicación. Configura Spring Security 6+
- * para manejar autenticación (quién eres) y autorización (qué puedes hacer).
- * Implementa seguridad Stateless (sin sesiones) basada en Tokens JWT.
+ * =================================================================================
+ * ARQUITECTURA DE SEGURIDAD (SECURITY CONFIG)
+ * =================================================================================
+ * Esta clase actúa como el "Portero Digital" de la aplicación.
+ * Utiliza Spring Security 6+ con una configuración basada en componentes (Beans)
+ * y expresiones Lambda (DSL) para definir las reglas de autenticación y autorización.
+ *
+ * ESTRATEGIA: Stateless (Sin estado) con Tokens JWT transportados en Cookies HttpOnly.
  */
-@Configuration // Marca la clase como fuente de beans para el contexto de Spring.
-@EnableWebSecurity // Habilita la seguridad web y permite personalizar la cadena de filtros.
-@RequiredArgsConstructor // Lombok: Genera constructor para inyectar campos 'final' automáticamente.
+@Configuration // Indica a Spring que esta clase contiene definiciones de Beans.
+@EnableWebSecurity // Habilita la seguridad web y permite personalizar el filtro de peticiones HTTP.
+@RequiredArgsConstructor // Lombok: Inyecta automáticamente los campos 'final' (Dependency Injection).
 public class SecurityConfig {
 
-    // Inyectamos nuestro filtro personalizado que valida el Token JWT.
+    // Inyectamos nuestro filtro personalizado que valida si la petición trae una Cookie/Token válido.
     private final JwtAuthFilter jwtAuthFilter;
-    // Inyectamos el servicio que busca usuarios en nuestra base de datos PostgreSQL.
-    private final UserDetailsService userDetailsService;
 
     /**
      * CADENA DE FILTROS DE SEGURIDAD (Security Filter Chain)
-     * Define el orden y las reglas que debe atravesar cada petición HTTP.
+     * Define el orden y las reglas que debe atravesar CADA petición HTTP que llega al servidor.
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // 1. CORS (Cross-Origin Resource Sharing)
-            // Permite que navegadores en otros dominios (ej: tu frontend Angular o Next.js)
-            // consuman esta API. Busca automáticamente el bean 'corsConfigurationSource'.
+            // 1. GESTIÓN DE CORS (Cross-Origin Resource Sharing)
+            // Permite que dominios externos (Angular, Next.js) consuman esta API.
+            // Busca automáticamente el Bean 'corsConfigurationSource' definido más abajo.
             .cors(Customizer.withDefaults())
 
-            // 2. CSRF (Cross-Site Request Forgery) -> DESACTIVADO
-            // En APIs REST que usan JWT (Stateless), no hay riesgo de CSRF porque no
-            // usamos cookies de sesión para autenticar. Por eso se deshabilita.
+            // 2. DESACTIVACIÓN DE CSRF (Cross-Site Request Forgery)
+            // En arquitecturas REST Stateless modernas, el manejo de CSRF tradicional
+            // suele desactivarse, ya que la validación se delega al manejo estricto de CORS
+            // y al uso de Cookies SameSite.
             .csrf(csrf -> csrf.disable())
 
-            // 3. CABECERAS DE SEGURIDAD (Security Headers - OWASP)
-            // Configuraciones para proteger al usuario final en su navegador.
+            // 3. CABECERAS DE SEGURIDAD (OWASP Security Headers)
+            // Hardening del servidor para proteger al cliente contra ataques comunes.
             .headers(headers -> headers
-                // Anti-Clickjacking: Prohíbe que esta API se cargue dentro de un <iframe>
-                // en otro sitio web malicioso.
+                // Anti-Clickjacking: Prohíbe cargar la web en un <iframe> ajeno.
                 .frameOptions(frame -> frame.deny())
                 
-                // Protección XSS: Desactiva el filtro obsoleto del navegador para delegar
-                // la seguridad en la Content Security Policy (CSP).
+                // Protección XSS: Desactivamos el filtro legacy del navegador para
+                // confiar plenamente en la Política de Seguridad de Contenido (CSP).
                 .xssProtection(xss -> xss.disable())
                 
-                // Content Security Policy (CSP):
-                // Define una "Lista Blanca" de fuentes de contenido confiables.
-                // 'default-src self': Solo permite scripts/estilos del mismo dominio.
-                // 'img-src ...': Permite cargar imágenes desde el propio dominio y desde tu Bucket S3.
+                // CSP (Content Security Policy): Lista blanca de orígenes.
+                // Define qué scripts, imágenes o estilos pueden ejecutarse en el navegador.
+                // Aquí autorizamos explícitamente a nuestro Bucket S3 (MinIO) para las imágenes.
                 .contentSecurityPolicy(csp -> csp
                     .policyDirectives("default-src 'self'; img-src 'self' https://s3.miscelaneasdavid.shop data:; object-src 'none'")
                 )
                 
                 // HSTS (HTTP Strict Transport Security):
-                // Le dice al navegador: "Durante el próximo año (31536000s), NUNCA intentes
-                // conectar por HTTP inseguro. Usa siempre HTTPS".
+                // Fuerza al navegador a usar HTTPS durante 1 año, evitando ataques "Man-in-the-Middle".
                 .httpStrictTransportSecurity(hsts -> hsts
                     .includeSubDomains(true)
                     .maxAgeInSeconds(31536000)
@@ -87,50 +83,46 @@ public class SecurityConfig {
             )
 
             // 4. REGLAS DE AUTORIZACIÓN (El Semáforo)
-            // Define qué endpoints son públicos y cuáles requieren permisos.
+            // Define qué endpoints son públicos y cuáles requieren permisos específicos.
             .authorizeHttpRequests(authorize -> authorize
-                // A. PÚBLICO: Login y Documentación (Swagger/OpenAPI)
+                // A. ZONA PÚBLICA (Sin Autenticación)
                 .requestMatchers(
-                    "/api/auth/login",
-                    
-                    // Rutas personalizadas que definiste en application.properties
+                    "/api/auth/login",  // Inicio de sesión
+                    "/api/auth/logout", // Cierre de sesión
+                    // Documentación de la API (Swagger/OpenAPI)
                     "/api/api-docs/**",
                     "/api/swagger-ui/**",
                     "/api/swagger-ui.html",
-                    
-                    // Rutas NATIVAS de Swagger (IMPORTANTE: Esto arregla el error 403)
                     "/swagger-ui/**", 
                     "/v3/api-docs/**",
                     "/swagger-ui.html"
                 ).permitAll()
-                // B. PÚBLICO: Catálogo de Productos (Cualquiera puede ver qué vendemos)
+                
+                // B. ZONA MIXTA (Catálogo Público)
+                // Cualquiera puede VER productos, pero no modificarlos.
                 .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
 
-                // C. PRIVADO (ADMIN): Subida de archivos multimedia a MinIO
+                // C. ZONA RESTRINGIDA (Administradores)
+                // Operaciones críticas: Subir archivos y Gestión de Inventario (CRUD).
                 .requestMatchers("/api/media/**").hasRole("ADMIN")
-
-                // D. PRIVADO (ADMIN): Gestión del inventario (Crear, Editar, Borrar)
                 .requestMatchers(HttpMethod.POST, "/api/productos").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/productos/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/productos/**").hasRole("ADMIN")
                 
-                // E. CANDADO FINAL: Cualquier otra ruta no especificada arriba requiere
-                // al menos estar autenticado (tener un Token válido).
+                // D. CANDADO FINAL
+                // Cualquier otra ruta no listada arriba requiere estar autenticado.
                 .anyRequest().authenticated()
             )
 
             // 5. GESTIÓN DE SESIÓN -> STATELESS
-            // No creamos HttpSession en el servidor (no hay JSESSIONID).
-            // Cada petición es independiente y debe traer su propia credencial (JWT).
+            // Fundamental para APIs REST. No se crea una "HttpSession" en el servidor.
+            // Cada petición es independiente y debe validarse por sí misma (vía Cookie/Token).
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-            // 6. PROVEEDOR DE AUTENTICACIÓN
-            // Vincula la lógica de base de datos con Spring Security.
-            .authenticationProvider(authenticationProvider())
-
-            // 7. FILTRO JWT
-            // Insertamos nuestro filtro personalizado ANTES del filtro estándar de usuario/pass.
-            // Si el JWT es válido, el usuario entra directo sin verificar contraseña de nuevo.
+            
+            // 6. INYECCIÓN DEL FILTRO JWT
+            // Insertamos nuestro 'jwtAuthFilter' ANTES del filtro estándar de autenticación de Spring.
+            // Esto permite interceptar la Cookie, validar el token y autenticar al usuario
+            // antes de que Spring Security decida si rechazar o aceptar la petición.
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
          return http.build();
@@ -138,7 +130,8 @@ public class SecurityConfig {
 
     /**
      * BEAN: AUTHENTICATION MANAGER
-     * Es el componente que orquesta el proceso de login. Lo usamos en AuthController.
+     * Es el "Jefe" de la autenticación. Recibe las credenciales y coordina con
+     * el Proveedor de Autenticación para verificar si son válidas.
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
@@ -146,23 +139,10 @@ public class SecurityConfig {
     }
 
     /**
-     * BEAN: AUTHENTICATION PROVIDER
-     * Enseña a Spring Security CÓMO verificar la identidad:
-     * 1. Usando 'userDetailsService' para buscar el usuario en BD.
-     * 2. Usando 'passwordEncoder' para comparar el hash de la contraseña.
-     */
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
-
-    /**
      * BEAN: PASSWORD ENCODER
-     * Algoritmo de encriptación. Usamos BCrypt, que es el estándar actual de la industria.
-     * Nunca guardamos contraseñas en texto plano.
+     * Define el algoritmo de hash para las contraseñas.
+     * Usamos BCrypt (estándar de industria), lo que significa que las contraseñas
+     * nunca se guardan en texto plano en la base de datos.
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -170,45 +150,36 @@ public class SecurityConfig {
     }
 
     /**
-     * BEAN: CONFIGURACIÓN CORS (Lista Blanca)
-     * Define qué dominios externos tienen permiso para hablar con el Backend.
+     * BEAN: CONFIGURACIÓN CORS (Lista Blanca de Accesos)
+     * Define estrictamente qué dominios externos pueden interactuar con el Backend.
+     * CRÍTICO para el funcionamiento de Cookies HttpOnly.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
         // 1. ORÍGENES PERMITIDOS
-        // Solo aceptamos peticiones que vengan de estas direcciones exactas.
-        // Esto previene que sitios maliciosos consuman tu API desde el navegador del usuario.
+        // Lista explícita de dominios confiables. NO se permite '*' cuando se usan cookies.
         configuration.setAllowedOrigins(Arrays.asList(
-            // Entorno de Desarrollo Local
-            "http://localhost:3000", // Frontend E-commerce
-            "http://localhost:4200", // Frontend Dashboard
-            
-            // Entorno de Producción (Público)
-            "https://miscelaneasdavid.shop",      // Tienda oficial
-            "https://www.miscelaneasdavid.shop",  // Tienda con www
-            
-            // Entorno de Producción (Privado / VPN)
-            // Necesario para que tú puedas administrar la tienda desde Tailscale.
-            "https://vmi2897387.taila142d4.ts.net:4200",
-            // dominios de desarrollo del cloudflare tunnel
-            "https://dev-admin.miscelaneasdavid.shop",
-            "https://dev-shop.miscelaneasdavid.shop"
-
+            "http://localhost:3000",      // Frontend Local (E-commerce)
+            "http://localhost:4200",      // Frontend Local (Dashboard)
+            "https://miscelaneasdavid.shop",      // Producción (Tienda)
+            "https://www.miscelaneasdavid.shop",  // Producción (Tienda con www)
+            "https://vmi2897387.taila142d4.ts.net:4200", // Acceso seguro vía VPN (Tailscale)
+            "https://dev-admin.miscelaneasdavid.shop",   // Entorno DEV (Cloudflare Tunnel)
+            "https://dev-shop.miscelaneasdavid.shop"     // Entorno DEV (Cloudflare Tunnel)
         ));
         
         // 2. MÉTODOS HTTP PERMITIDOS
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         
         // 3. CABECERAS PERMITIDAS
-        // Authorization: Para enviar el Token Bearer.
-        // Content-Type: Para enviar JSON.
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         
-        // 4. CREDENCIALES
-        // Permite envío de cookies si fuera necesario en el futuro.
-        configuration.setAllowCredentials(true);
+        // 4. PERMITIR CREDENCIALES (COOKIES)
+        // Esta línea es OBLIGATORIA para que el navegador envíe la Cookie HttpOnly.
+        // Sin esto, el sistema de autenticación seguro fallaría.
+        configuration.setAllowCredentials(true); 
 
         // Aplica esta configuración a TODAS las rutas (/**) de la API.
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
