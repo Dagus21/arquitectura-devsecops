@@ -1,6 +1,7 @@
 package com.miscelaneasdavid.backend.service;
 
 import com.miscelaneasdavid.backend.dto.ProductoDTO;
+import com.miscelaneasdavid.backend.dto.ProductoPublicoDTO;
 import com.miscelaneasdavid.backend.entity.Producto;
 import com.miscelaneasdavid.backend.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ public class ProductoService {
         dto.setStock(producto.getStock());
         dto.setEstado(producto.getEstado()); // Mapeo nuevo
         dto.setImagenUrl(producto.getImagenUrl()); // Mapeo nuevo
+        dto.setDescripcionPrivada(producto.getDescripcionPrivada());
         return dto;
     }
 
@@ -51,7 +53,31 @@ public class ProductoService {
         producto.setStock(dto.getStock());
         producto.setEstado(dto.getEstado());
         producto.setImagenUrl(dto.getImagenUrl());
+        producto.setDescripcionPrivada(dto.getDescripcionPrivada());
         return producto;
+    }
+
+    private ProductoPublicoDTO convertirA_DTO_Publico(Producto producto) {
+        ProductoPublicoDTO dto = new ProductoPublicoDTO();
+        dto.setIdProducto(producto.getIdProducto());
+        dto.setNombre(producto.getNombre());
+        dto.setDescripcion(producto.getDescripcion());
+        dto.setPrecioVenta(producto.getPrecioVenta());
+        dto.setEstado(producto.getEstado());
+        dto.setImagenUrl(producto.getImagenUrl());
+        dto.setDisponible(producto.getStock() > 0 && !"AGOTADO".equals(producto.getEstado()));
+        
+        // NUEVO: Pasamos el stock real
+        dto.setStock(producto.getStock()); 
+        return dto;
+    }
+
+    // --- NUEVO MÉTODO PÚBLICO ---
+    public List<ProductoPublicoDTO> obtenerProductosPublicos() {
+        return productoRepository.findAll().stream()
+                .filter(p -> !"INACTIVO".equals(p.getEstado())) // Filtramos inactivos desde la BD
+                .map(this::convertirA_DTO_Publico)
+                .collect(Collectors.toList());
     }
 
     // --- LÓGICA DE NEGOCIO ---
@@ -73,7 +99,6 @@ public class ProductoService {
         return convertirA_DTO(productoGuardado);
     }
 
-    // --- AQUÍ ESTABA EL ERROR DE COMPILACIÓN ---
     public ProductoDTO actualizarProducto(Long id, ProductoDTO productoDTO) {
         Producto productoExistente = productoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado con id: " + id));
@@ -83,14 +108,20 @@ public class ProductoService {
         productoExistente.setNombre(productoDTO.getNombre());
         productoExistente.setDescripcion(productoDTO.getDescripcion());
         
-        // CORRECCIÓN: Usar los nuevos getters/setters de BigDecimal
+        // ---> ¡AÑADIR ESTA LÍNEA AQUÍ! <---
+        productoExistente.setDescripcionPrivada(productoDTO.getDescripcionPrivada());
+        
         productoExistente.setPrecioVenta(productoDTO.getPrecioVenta());
         productoExistente.setPrecioCompra(productoDTO.getPrecioCompra());
-        
         productoExistente.setStock(productoDTO.getStock());
         
-        // CORRECCIÓN: Actualizar campos nuevos que faltaban
-        productoExistente.setEstado(productoDTO.getEstado());
+        // LÓGICA AUTOMÁTICA DE ESTADO
+        if (productoDTO.getStock() > 0 && "AGOTADO".equals(productoExistente.getEstado())) {
+            productoExistente.setEstado("ACTIVO");
+        } else {
+            productoExistente.setEstado(productoDTO.getEstado());
+        }
+
         productoExistente.setImagenUrl(productoDTO.getImagenUrl());
 
         Producto productoActualizado = productoRepository.save(productoExistente);

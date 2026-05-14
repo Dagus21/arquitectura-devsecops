@@ -1,11 +1,41 @@
+/* --- RUTA: frontend-dashboard/src/styles.scss --- */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-
-/* Resto de tus estilos... */
 html, body {
     height: 100%;
     margin: 0;
     font-family: var(--font-family);
+}
+
+/* ========================================================
+   FIX: Ajuste responsivo para los Toasts de PrimeNG
+======================================================== */
+@media (max-width: 640px) {
+    .p-toast.p-toast-top-center {
+        width: 90vw !important; /* Ocupa máximo el 90% de la pantalla */
+        max-width: 400px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
+    
+    /* Evita que textos muy largos (ej: URLs) rompan la caja */
+    .p-toast-message-content {
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+    }
+}
+
+/* =========================================================
+   FIX: Notificaciones (Toast) en dispositivos móviles
+   ========================================================= */
+@media screen and (max-width: 768px) {
+    .p-toast-top-center {
+        top: 20px !important; /* Lo despega del borde superior */
+        width: 90% !important; /* Evita que ocupe el 100% de la pantalla */
+        left: 5% !important; /* Lo centra perfectamente (5% a cada lado) */
+        transform: none !important;
+    }
 }

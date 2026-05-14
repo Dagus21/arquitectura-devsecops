@@ -6,7 +6,7 @@ import java.math.BigDecimal; // IMPORTANTE: Necesario para manejar dinero con pr
 
 /*
  * ========================================================================
- *              ENTIDAD PRODUCTO (ACTUALIZADA)
+ *              ENTIDAD PRODUCTO (ACTUALIZADA CON OPTIMISTIC LOCKING)
  * ========================================================================
  */
 
@@ -31,7 +31,22 @@ public class Producto {
     @Column(columnDefinition = "TEXT")
     private String descripcion;
 
+    @Column(columnDefinition = "TEXT")
+    private String descripcionPrivada; // <--- NUEVO CAMPO
+
     private Integer stock;
+
+    // ========================================================================
+    //              CONTROL DE CONCURRENCIA (OPTIMISTIC LOCKING)
+    // ========================================================================
+    // Propósito: Evitar el problema de "condición de carrera" o "sobreventa".
+    // Cómo funciona: Cada vez que se realiza un UPDATE (ej. al restar stock tras una venta), 
+    // Hibernate suma automáticamente +1 a este número.
+    // Si dos clientes intentan comprar simultáneamente, el primero que guarde cambiará la versión.
+    // Cuando el segundo cliente intente guardar con la versión antigua, Hibernate lo rechazará 
+    // lanzando 'ObjectOptimisticLockingFailureException', impidiendo inventarios negativos.
+    @Version
+    private Long version;
 
     // --- CAMBIO IMPORTANTE: Double vs BigDecimal ---
     // Usamos BigDecimal en lugar de Double para precios.

@@ -1,198 +1,130 @@
-<div class="card">
-  <!-- BLOQUE DE ERROR EN LÍNEA (Solo aparece si hay error) -->
+<!-- src/app/features/inventory/product-list/product-list.component.html -->
+<div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-gray-200">
+  
   @if (errorMessage) {
-    <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center flex flex-col items-center gap-3 mb-6 animate-fade-in shadow-sm">
+    <!-- Alerta de Error de Conexión -->
+    <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center flex flex-col items-center gap-3 mb-6 shadow-sm">
         <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
             <i class="pi pi-wifi text-red-600 text-xl"></i>
         </div>
         <h3 class="text-red-800 font-bold text-lg m-0">Conexión Interrumpida</h3>
         <p class="text-red-600 m-0 max-w-md">{{ errorMessage }}</p>
-        
-        <!-- Botón para reintentar -->
-        <button 
-            pButton 
-            label="Reintentar Conexión" 
-            icon="pi pi-refresh" 
-            class="p-button-outlined p-button-danger p-button-sm mt-2" 
-            (click)="ngOnInit()">
-        </button>
+        <button pButton label="Reintentar Conexión" icon="pi pi-refresh" class="p-button-outlined p-button-danger p-button-sm mt-2" (click)="ngOnInit()"></button>
     </div>
-  }
- <!-- Tabla Principal -->
-  <!-- TABLA DE DATOS (Solo se ve si NO hay error) -->
-  @if (!errorMessage) {
-    <p-table
-      [value]="products"
-      [tableStyle]="{ 'min-width': '60rem' }"
-      [paginator]="true"
-      [rows]="10"
-      [loading]="isLoading"
-      class="p-datatable-sm"
-      [rowsPerPageOptions]="[5, 10, 20]">
-
+  } @else {
+    
+    <!-- OPTIMIZACIÓN: [filterDelay]="400" evita que la app se ponga lenta al escribir -->
+    <p-table #dt [value]="products" dataKey="idProducto" [paginator]="true" [rows]="10" [loading]="isLoading" class="p-datatable-sm" filterDisplay="row" [filterDelay]="400">
+      
+      <!-- HEADER (Solo Título y Botón Nuevo, sin buscador global) -->
       <ng-template pTemplate="caption">
-        <div class="flex items-center justify-between flex-wrap gap-4 p-2">
-          <h2 class="text-xl font-bold m-0 text-gray-800">Inventario</h2>
-          <div class="flex gap-2">
-            <p-button
-              label="Nuevo"
-              icon="pi pi-plus"
-              size="small"
-              (onClick)="openNew()">
-            </p-button>
-          </div>
+        <div class="flex items-center justify-between pb-2 border-b border-gray-100 mb-2">
+          <h2 class="text-xl font-extrabold text-[#000E29]">Catálogo</h2>
+          <button pButton class="!bg-[#000E29] hover:!bg-[#001B4B] !border-none text-white shadow-md rounded-lg transition-colors flex items-center justify-center shrink-0 px-4 py-2" (click)="openNew()">
+            <i class="pi pi-plus"></i>
+            <span class="hidden sm:inline-block ml-2 font-bold">Nuevo Producto</span>
+          </button>
         </div>
       </ng-template>
 
+      <!-- ENCABEZADOS DE LA TABLA (DOS FILAS) -->
       <ng-template pTemplate="header">
+        
+        <!-- Fila 1: Nombres de Columnas -->
         <tr>
-          <th style="width: 10%">Imagen</th>
-          <th pSortableColumn="nombre" style="width: 25%">Producto <p-sortIcon field="nombre"></p-sortIcon></th>
-          <th pSortableColumn="precioVenta" style="width: 15%">Precio <p-sortIcon field="precioVenta"></p-sortIcon></th>
-          <th pSortableColumn="stock" style="width: 15%">Stock <p-sortIcon field="stock"></p-sortIcon></th>
+          <th style="width: 8%">Imagen</th>
+          <th pSortableColumn="nombre">Producto <p-sortIcon field="nombre"></p-sortIcon></th>
+          <th pSortableColumn="idReferencia">Ref (SKU) <p-sortIcon field="idReferencia"></p-sortIcon></th>
+          <th pSortableColumn="precioCompra">Costo <p-sortIcon field="precioCompra"></p-sortIcon></th>
+          <th pSortableColumn="precioVenta">Venta <p-sortIcon field="precioVenta"></p-sortIcon></th>
+          <th pSortableColumn="stock">Stock <p-sortIcon field="stock"></p-sortIcon></th>
           <th style="width: 15%">Estado</th>
-          <th style="width: 20%">Acciones</th>
+          <th style="width: 8%">Acciones</th>
+        </tr>
+
+        <!-- Fila 2: Búsqueda Automática en Tiempo Real -->
+        <tr>
+          <th></th> <!-- Imagen -->
+          
+          <th>
+            <!-- El evento (input) hace que filtre por cada letra que escribes -->
+            <input type="text" pInputText (input)="dt.filter($any($event.target).value, 'nombre', 'contains')" placeholder="Buscar..." class="w-full text-sm py-1.5 px-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
+          </th>
+          
+          <th>
+            <input type="text" pInputText (input)="dt.filter($any($event.target).value, 'idReferencia', 'contains')" placeholder="SKU..." class="w-full text-sm py-1.5 px-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
+          </th>
+          
+          <th>
+            <input type="text" pInputText (input)="dt.filter($any($event.target).value, 'precioCompra', 'contains')" placeholder="Costo..." class="w-full text-sm py-1.5 px-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
+          </th>
+          
+          <th>
+            <input type="text" pInputText (input)="dt.filter($any($event.target).value, 'precioVenta', 'contains')" placeholder="Venta..." class="w-full text-sm py-1.5 px-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
+          </th>
+          
+          <th>
+            <input type="text" pInputText (input)="dt.filter($any($event.target).value, 'stock', 'equals')" placeholder="Cant..." class="w-full text-sm py-1.5 px-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
+          </th>
+          
+          <th>
+            <p-columnFilter field="estado" matchMode="equals" [showMenu]="false">
+                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                    <p-select [ngModel]="value" [options]="statuses" (onChange)="filter($event.value)" placeholder="Todos" [showClear]="true" styleClass="w-full" appendTo="body">
+                        <ng-template let-option pTemplate="item"><p-tag [value]="option.label" [severity]="getSeverity(option.value)"></p-tag></ng-template>
+                    </p-select>
+                </ng-template>
+            </p-columnFilter>
+          </th>
+          
+          <th></th> <!-- Acciones -->
         </tr>
       </ng-template>
 
+      <!-- CUERPO DE LA TABLA -->
       <ng-template pTemplate="body" let-product>
         <tr>
           <td>
-            <div class="w-12 h-12 rounded border border-gray-200 overflow-hidden bg-white flex items-center justify-center">
+            <div class="w-12 h-12 rounded-lg border border-gray-200 overflow-hidden bg-white flex items-center justify-center shadow-sm">
               @if (product.imagenUrl) {
-                <img
-                  [src]="product.imagenUrl"
-                  [alt]="product.nombre"
-                  class="w-full h-full object-cover" />
+                <p-image [src]="product.imagenUrl" alt="Producto" [preview]="true" imageClass="w-12 h-12 object-cover"></p-image>
               } @else {
-                <i class="pi pi-image text-gray-400 text-xl"></i>
+                <i class="pi pi-image text-gray-300"></i>
               }
             </div>
           </td>
+          <td><span class="font-bold text-[#000E29] whitespace-nowrap">{{ product.nombre }}</span></td>
+          <td><span class="text-xs font-mono bg-gray-100 text-gray-700 px-2 py-1 rounded border border-gray-200">{{ product.idReferencia }}</span></td>
+          <td class="font-medium text-gray-500 whitespace-nowrap">{{ product.precioCompra | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+          <td class="font-bold text-blue-600 whitespace-nowrap">{{ product.precioVenta | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+          <td><span [class.text-red-500]="product.stock < 5" [class.font-bold]="product.stock < 5" class="text-gray-700">{{ product.stock }} u.</span></td>
+          <td><p-tag [value]="product.estado" [severity]="getSeverity(product.estado)"></p-tag></td>
           <td>
-            <div class="flex flex-col">
-              <span class="font-medium text-gray-800">{{ product.nombre }}</span>
-              <span class="text-xs text-gray-500">{{ product.idReferencia }}</span>
-            </div>
-          </td>
-          <td class="font-semibold text-gray-700">
-            {{ product.precioVenta | currency:'COP':'symbol-narrow':'1.0-0' }}
-          </td>
-          <td>
-            <span [class.text-red-500]="product.stock < 5" [class.font-bold]="product.stock < 5">
-              {{ product.stock }} u.
-            </span>
-          </td>
-          <td>
-            <p-tag [value]="product.estado" [severity]="getSeverity(product.estado)" [rounded]="true"></p-tag>
-          </td>
-          <td>
-            <div class="flex gap-2">
-              <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info" pTooltip="Editar"></p-button>
-              <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" pTooltip="Eliminar"></p-button>
+            <div class="flex gap-1">
+              <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text !text-blue-600 hover:!bg-blue-50" pTooltip="Editar" (click)="editProduct(product)"></button>
+              <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text !text-red-500 hover:!bg-red-50" pTooltip="Eliminar" (click)="deleteProduct(product)"></button>
             </div>
           </td>
         </tr>
       </ng-template>
+      
+      <ng-template pTemplate="emptymessage">
+        <tr>
+            <td colspan="8" class="text-center p-6 text-gray-500 font-medium">
+                No se encontraron productos que coincidan con tu búsqueda.
+            </td>
+        </tr>
+      </ng-template>
+      
     </p-table>
   }
-
-  <!-- ========================================================= -->
-  <!-- DIÁLOGO (MODAL) DE CREACIÓN / EDICIÓN                     -->
-  <!-- ========================================================= -->
-  <p-dialog
-    [(visible)]="productDialog"
-    [style]="{ width: '600px' }"
-    header="Detalles del Producto"
-    [modal]="true"
-    [draggable]="false"
-    [resizable]="false"
-    styleClass="p-fluid">
-
-    <ng-template pTemplate="content">
-      <form [formGroup]="productForm" class="flex flex-col gap-5 pt-2">
-
-        <!-- 1. SECCIÓN DE IMAGEN -->
-        <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
-          <!-- Vista previa -->
-          @if (productForm.get('imagenUrl')?.value) {
-            <div class="w-40 h-40 rounded-lg overflow-hidden border border-gray-200 shadow-sm mb-3 relative">
-              <img [src]="productForm.get('imagenUrl')?.value" class="w-full h-full object-cover">
-            </div>
-          }
-
-          <!-- Botón de subida -->
-          <p-fileUpload
-            mode="basic"
-            chooseLabel="Seleccionar Imagen"
-            chooseIcon="pi pi-camera"
-            name="file"
-            accept="image/*"
-            [auto]="true"
-            [customUpload]="true"
-            (uploadHandler)="onUpload($event)"
-            [disabled]="isUploading">
-          </p-fileUpload>
-
-          @if (isUploading) {
-            <small class="text-blue-600 font-medium mt-2">
-              <i class="pi pi-spin pi-spinner mr-1"></i> Subiendo imagen...
-            </small>
-          }
-        </div>
-
-        <!-- 2. DATOS BÁSICOS -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="field">
-            <label class="font-bold text-sm mb-1 block">Nombre del Producto</label>
-            <input type="text" pInputText formControlName="nombre" placeholder="Ej: Camiseta Polo" />
-            @if (submitted && productForm.get('nombre')?.invalid) {
-              <small class="text-red-500">Requerido</small>
-            }
-          </div>
-          <div class="field">
-            <label class="font-bold text-sm mb-1 block">Referencia (SKU)</label>
-            <input type="text" pInputText formControlName="idReferencia" placeholder="Ej: CAM-001" />
-            @if (submitted && productForm.get('idReferencia')?.invalid) {
-              <small class="text-red-500">Requerido</small>
-            }
-          </div>
-        </div>
-
-        <!-- 3. DESCRIPCIÓN -->
-        <div class="field">
-          <label class="font-bold text-sm mb-1 block">Descripción</label>
-          <textarea pInputTextarea formControlName="descripcion" rows="3" class="w-full" placeholder="Detalles del producto..."></textarea>
-        </div>
-
-        <!-- 4. PRECIOS Y STOCK -->
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div class="field">
-            <label class="font-bold text-sm mb-1 block">Costo Compra</label>
-            <p-inputNumber formControlName="precioCompra" mode="currency" currency="COP" locale="es-CO" placeholder="$ 0"></p-inputNumber>
-          </div>
-          <div class="field">
-            <label class="font-bold text-sm mb-1 block">Precio Venta</label>
-            <p-inputNumber formControlName="precioVenta" mode="currency" currency="COP" locale="es-CO" placeholder="$ 0"></p-inputNumber>
-          </div>
-          <div class="field">
-            <label class="font-bold text-sm mb-1 block">Stock Inicial</label>
-            <p-inputNumber formControlName="stock" [min]="0" placeholder="0"></p-inputNumber>
-          </div>
-        </div>
-
-        <!-- 5. ESTADO -->
-        <div class="field">
-          <label class="font-bold text-sm mb-1 block">Estado</label>
-          <p-select [options]="statuses" formControlName="estado" optionLabel="label" optionValue="value" class="w-full"></p-select>
-        </div>
-
-      </form>
-    </ng-template>
-
-    <ng-template pTemplate="footer">
-      <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="hideDialog()"></button>
-      <button pButton pRipple label="Guardar Producto" icon="pi pi-check" class="p-button-primary" (click)="saveProduct()" [loading]="isLoading"></button>
-    </ng-template>
-  </p-dialog>
 </div>
+
+<!-- COMPONENTE HIJO (FORMULARIO) -->
+<app-product-form 
+  [visible]="productDialogVisible"
+  [productData]="selectedProduct"
+  [isLoading]="isSaving"
+  (onSave)="saveProduct($event)"
+  (onCancel)="closeDialog()">
+</app-product-form>

@@ -41,4 +41,4 @@ yarn-error.log*
 next-env.d.ts
 
 # script de desarrollo
-start_dev.ps1
+start_dev_ecommerce.ps1

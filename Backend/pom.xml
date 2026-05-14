@@ -147,6 +147,14 @@
 			<artifactId>kotlin-stdlib</artifactId>
 			<version>1.9.22</version>
 		</dependency>
+		<!-- Mercado pago -->
+		<!-- Mercado Pago SDK -->
+		<dependency>
+			<groupId>com.mercadopago</groupId>
+			<artifactId>sdk-java</artifactId>
+			<version>2.8.0</version> <!-- Verifica la última versión estable -->
+		</dependency>
+
 
 	</dependencies>
 

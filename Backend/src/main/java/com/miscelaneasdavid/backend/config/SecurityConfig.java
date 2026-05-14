@@ -89,6 +89,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/auth/login",  // Inicio de sesión
                     "/api/auth/logout", // Cierre de sesión
+                    "/api/auth/register",
                     // Documentación de la API (Swagger/OpenAPI)
                     "/api/api-docs/**",
                     "/api/swagger-ui/**",
@@ -97,10 +98,13 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/swagger-ui.html"
                 ).permitAll()
+
+                 // PERMITIR WEBHOOKS SIN AUTENTICACIÓN
+                .requestMatchers(HttpMethod.POST, "/api/pagos/webhook").permitAll()
                 
-                // B. ZONA MIXTA (Catálogo Público)
-                // Cualquiera puede VER productos, pero no modificarlos.
-                .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
+                // B. ZONA MIXTA (Catálogo Público) - AHORA ULTRA SEGURO
+                .requestMatchers(HttpMethod.GET, "/api/productos/publicos").permitAll()
+
 
                 // C. ZONA RESTRINGIDA (Administradores)
                 // Operaciones críticas: Subir archivos y Gestión de Inventario (CRUD).
@@ -108,7 +112,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/productos").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/productos/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/productos/**").hasRole("ADMIN")
-                
+                .requestMatchers(HttpMethod.GET,"/api/ventas/**").hasRole("ADMIN")
+                 // (Más abajo, en la zona C de Admin, asegúrate de que diga):
+                .requestMatchers("/api/productos/**").hasRole("ADMIN")
                 // D. CANDADO FINAL
                 // Cualquier otra ruta no listada arriba requiere estar autenticado.
                 .anyRequest().authenticated()
@@ -161,13 +167,13 @@ public class SecurityConfig {
         // 1. ORÍGENES PERMITIDOS
         // Lista explícita de dominios confiables. NO se permite '*' cuando se usan cookies.
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:3000",      // Frontend Local (E-commerce)
-            "http://localhost:4200",      // Frontend Local (Dashboard)
             "https://miscelaneasdavid.shop",      // Producción (Tienda)
             "https://www.miscelaneasdavid.shop",  // Producción (Tienda con www)
             "https://vmi2897387.taila142d4.ts.net:4200", // Acceso seguro vía VPN (Tailscale)
-            "https://dev-admin.miscelaneasdavid.shop",   // Entorno DEV (Cloudflare Tunnel)
-            "https://dev-shop.miscelaneasdavid.shop"     // Entorno DEV (Cloudflare Tunnel)
+           // --- NUEVOS DOMINIOS TAILSCALE (LOCAL) ---
+            "https://desktop-vaf4ep9-1.taila142d4.ts.net",         // Dashboard - desarrollo
+            "https://desktop-vaf4ep9-1.taila142d4.ts.net:8443",    // API - desarrollo
+            "https://desktop-vaf4ep9-1.taila142d4.ts.net:10000"    // E-commerce - desarrollo
         ));
         
         // 2. MÉTODOS HTTP PERMITIDOS

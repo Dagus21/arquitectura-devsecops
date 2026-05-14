@@ -31,6 +31,8 @@ public class Usuario implements UserDetails {
     @Column(nullable = false)
     private String nombre;
 
+    private String telefono; // <--- AÑADIR ESTE CAMPO
+
     private String password;
 
     @Column(unique = true)

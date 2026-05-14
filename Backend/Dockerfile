@@ -31,8 +31,23 @@ WORKDIR /app
 # Copiamos ÚNICAMENTE el archivo .jar compilado desde la etapa 'builder'
 COPY --from=builder /app/target/*.jar app.jar
 
+# ========================================================================
+# HARDENING DE SEGURIDAD: PRINCIPIO DE MENOR PRIVILEGIO (No-Root)
+# ========================================================================
+# Por defecto, Docker ejecuta los procesos como 'root' (administrador total).
+# Si un atacante logra inyectar código (RCE) en Java, tomaría control del contenedor.
+# Para evitarlo, creamos un usuario fantasma de sistema llamado 'spring' sin privilegios.
+RUN addgroup --system spring && adduser --system --ingroup spring spring
+
+# Le transferimos la propiedad del archivo ejecutable al nuevo usuario 'spring'
+RUN chown spring:spring app.jar
+
+# Instruimos al motor de Docker a que cambie de 'root' a 'spring' a partir de esta línea
+USER spring:spring
+# ========================================================================
+
 # Exponemos el puerto 8080 para que el contenedor pueda recibir tráfico
 EXPOSE 8080
 
-# El comando final que se ejecutará cuando el contenedor arranque
+# El comando final que se ejecutará cuando el contenedor arranque (ahora de forma segura)
 CMD ["java", "-jar", "app.jar"]

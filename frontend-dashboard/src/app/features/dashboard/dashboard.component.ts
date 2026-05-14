@@ -4,6 +4,10 @@ import { API_CONFIG } from '../../core/config/api.config'; // Importar Config
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../app/core/services/auth/auth.service';
 
+// IMPORTANTE: Importar RouterLink y RouterLinkActive
+import { RouterLink, RouterLinkActive } from '@angular/router'; 
+
+
 // PrimeNG Imports
 import { ButtonModule } from 'primeng/button';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -12,7 +16,8 @@ import { AvatarModule } from 'primeng/avatar';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterOutlet, ButtonModule, ToolbarModule, AvatarModule],
+  // AGREGARLOS AL ARRAY DE IMPORTS AQUÍ:
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ButtonModule, ToolbarModule, AvatarModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
@@ -20,6 +25,8 @@ export class DashboardComponent implements OnInit {
    // Implementar OnInit
   private authService = inject(AuthService);
   private http = inject(HttpClient); // Inyectar
+
+  mobileMenuOpen: boolean = false; // <--- AÑADIR ESTA LÍNEA
   
 
   ngOnInit() {

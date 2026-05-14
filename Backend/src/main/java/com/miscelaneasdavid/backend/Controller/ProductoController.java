@@ -1,6 +1,7 @@
 package com.miscelaneasdavid.backend.Controller;
 
 import com.miscelaneasdavid.backend.dto.ProductoDTO;
+import com.miscelaneasdavid.backend.dto.ProductoPublicoDTO;
 import com.miscelaneasdavid.backend.service.ProductoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,10 +23,19 @@ public class ProductoController {
         this.productoService = productoService;
     }
 
+    // productos para el dashboard
     @GetMapping
     public ResponseEntity<List<ProductoDTO>> obtenerTodosLosProductos() {
         return ResponseEntity.ok(productoService.obtenerTodosLosProductos());
     }
+
+    //productos para el ecommerce
+    // --- NUEVO ENDPOINT PARA NEXT.JS (Público y Seguro) ---
+    @GetMapping("/publicos")
+    public ResponseEntity<List<ProductoPublicoDTO>> obtenerProductosPublicos() {
+        return ResponseEntity.ok(productoService.obtenerProductosPublicos());
+    }
+    
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductoDTO> obtenerProductoPorId(@PathVariable Long id) {
