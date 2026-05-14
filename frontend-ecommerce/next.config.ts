@@ -2,14 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  poweredByHeader: false, // <--- AGREGAR ESTO (Oculta "X-Powered-By: Next.js")
-  productionBrowserSourceMaps: false, // <--- AGREGAR ESTO (Oculta tu código fuente)
+  poweredByHeader: false, // Oculta "X-Powered-By: Next.js"
+  productionBrowserSourceMaps: false, // Oculta tu código fuente
 
-   // 🔥 NUEVO: Elimina TODOS los console.log en producción automáticamente.
-  // Así, si se te olvidó un console.log(user_data) en el código, el cliente no lo verá.
+  // Elimina TODOS los console.log en producción automáticamente.
   compiler: {
     removeConsole: process.env.NODE_ENV === "production" ? {
-      exclude: ["error"], // Deja los console.error por si necesitas debugear algo crítico
+      exclude: ["error"],
     } : false,
   },
   
@@ -19,19 +18,23 @@ const nextConfig: NextConfig = {
   ],
 
   // ==============================================================
-  // CONFIGURACIÓN BFF (PROXY INVERSO DE NEXT.JS)
-  // Oculta la URL del Backend (Spring Boot) del navegador del cliente
+  // CONFIGURACIÓN API GATEWAY (BFF - Backend For Frontend)
   // ==============================================================
   async rewrites() {
-    return[
+    return [
       {
-        // Cuando el frontend llame a "/api-proxy/auth/login"...
+        // 1. Proxy interno: Cuando el cliente de Next.js llame a /api-proxy
         source: '/api-proxy/:path*',
-        // ...Next.js reenvía la petición al servidor real en secreto
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`, 
+        destination: 'http://backend-compose:8080/api/:path*', 
       },
       {
-        // 2. Proxy para las Imágenes (MinIO S3) - ¡NUEVO!
+        // 2. ENRUTADOR MÁGICO: Todo lo que el Dashboard (Angular) mande a miscelaneasdavid.shop/api
+        // Next.js lo intercepta y se lo pasa directo a Spring Boot por la red interna de Docker.
+        source: '/api/:path*',
+        destination: 'http://backend-compose:8080/api/:path*',
+      },
+      {
+        // 3. Proxy para las Imágenes (MinIO S3)
         source: '/media-proxy/:path*',
         destination: 'https://s3.miscelaneasdavid.shop/productos-imagenes/:path*',
       }
@@ -49,7 +52,7 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           {
-            // 🔥 AQUÍ ESTÁ EL CSP ACTUALIZADO Y LIMPIO 🔥
+            // CSP ACTUALIZADO Y LIMPIO
             key: 'Content-Security-Policy',
             value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://static.cloudflareinsights.com https://http2.mlstatic.com https://*.mercadopago.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://s3.miscelaneasdavid.shop https://http2.mlstatic.com; font-src 'self'; connect-src 'self' https://miscelaneasdavid.shop https://cloudflareinsights.com https://*.mercadopago.com https://*.mercadolibre.com; frame-src 'self' https://*.mercadopago.com;",
           },
