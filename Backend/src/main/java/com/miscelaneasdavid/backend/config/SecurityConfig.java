@@ -180,7 +180,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         
         // 3. CABECERAS PERMITIDAS
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
         
         // 4. PERMITIR CREDENCIALES (COOKIES)
         // Esta línea es OBLIGATORIA para que el navegador envíe la Cookie HttpOnly.
