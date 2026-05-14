@@ -1,13 +1,16 @@
 export const getProducts = async () => {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  // MAGIA DOCKER: En vez de salir a internet, atacamos el nombre del contenedor
+  // Esto elimina el error ConnectionRefused y hace que la carga sea instantánea.
+  const API_URL = process.env.NODE_ENV === 'production' 
+    ? 'http://backend-compose:8080/api' 
+    : process.env.NEXT_PUBLIC_API_URL;
 
   try {
-   // 🔥 CAMBIO AQUÍ: Cambiamos 'next: { revalidate... }' por 'cache: no-store'
     const res = await fetch(`${API_URL}/productos/publicos`, { 
       cache: 'no-store' 
     });
 
-    if (!res.ok) return[];
+    if (!res.ok) return [];
 
     const data = await res.json();
     
@@ -18,9 +21,7 @@ export const getProducts = async () => {
         precioVenta: p.precioVenta,
         estado: p.estado,
         disponible: p.disponible,
-        
-        stock: p.stock, // <--- NUEVA LÍNEA: Recibimos el stock
-
+        stock: p.stock,
         imagenUrl: p.imagenUrl 
           ? p.imagenUrl.replace('https://s3.miscelaneasdavid.shop/productos-imagenes', '/media-proxy')
           : null,
@@ -28,6 +29,6 @@ export const getProducts = async () => {
       
   } catch (error) {
     console.error('Error de conexión con el backend:', error);
-    return[];
+    return [];
   }
 };
