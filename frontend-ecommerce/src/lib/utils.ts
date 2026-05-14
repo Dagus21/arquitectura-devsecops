@@ -5,7 +5,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// --- AGREGA ESTO ---
 export function formatPrice(price: number) {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -14,13 +13,10 @@ export function formatPrice(price: number) {
   }).format(price)
 }
 
-// --- AGREGA ESTA NUEVA FUNCIÓN ---
+// --- FUNCIÓN MODIFICADA: Ya no usa proxy, devuelve la original de S3 ---
 export function getProxiedImageUrl(originalUrl?: string) {
   if (!originalUrl) return '';
   
-  // Reemplazamos el origen real de MinIO por nuestra ruta proxy oculta
-  return originalUrl.replace(
-    'https://s3.miscelaneasdavid.shop/productos-imagenes',
-    '/media-proxy'
-  );
+  // Como ya no usamos proxy, devolvemos la URL segura directa de S3
+  return originalUrl;
 }

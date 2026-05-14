@@ -22,9 +22,7 @@ export const getProducts = async () => {
         estado: p.estado,
         disponible: p.disponible,
         stock: p.stock,
-        imagenUrl: p.imagenUrl 
-          ? p.imagenUrl.replace('https://s3.miscelaneasdavid.shop/productos-imagenes', '/media-proxy')
-          : null,
+        imagenUrl: p.imagenUrl // <--- DEJAMOS LA URL REAL DIRECTA DE S3
     }));
       
   } catch (error) {
