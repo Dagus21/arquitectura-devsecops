@@ -3,6 +3,7 @@ export interface Product {
     idReferencia: string;
     nombre: string;
     descripcion: string;
+    descripcionPrivada?: string; // <--- AÑADIR ESTA LÍNEA (opcional con '?')
     precioVenta: number;
     precioCompra: number;
     stock: number;

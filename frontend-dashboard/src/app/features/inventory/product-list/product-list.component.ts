@@ -1,66 +1,43 @@
+// src/app/features/inventory/product-list/product-list.component.ts
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms'; 
 import { ProductService } from '../../../core/services/product.service';
-import { MediaService } from '../../../core/services/media.service'; // <--- NUEVO
 import { Product } from '../../../core/models/product.interface';
 import { MessageService } from 'primeng/api';
 import { VpnService } from '../../../core/services/vpn.service';
+import { ProductFormComponent } from '../product-form/product-form';
 
-// --- PrimeNG Imports ---
+// PrimeNG
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { InputTextModule } from 'primeng/inputtext';
-import { DialogModule } from 'primeng/dialog'; // <--- NUEVO
-import { InputNumberModule } from 'primeng/inputnumber'; // <--- NUEVO
-import { TextareaModule } from 'primeng/textarea'; 
-import { FileUploadModule } from 'primeng/fileupload'; // <--- NUEVO
 import { SelectModule } from 'primeng/select';
-import { ToastModule } from 'primeng/toast';
+import { Image } from 'primeng/image'; // <-- IMPORTAMOS EL MÓDULO DE IMAGEN
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
   imports: [
-    CommonModule, 
-    ReactiveFormsModule,
-    TableModule, 
-    ButtonModule, 
-    TagModule, 
-    TooltipModule,
-    IconFieldModule, 
-    InputIconModule, 
-    InputTextModule,
-    DialogModule,
-    InputNumberModule,
-    TextareaModule,
-    FileUploadModule,
-    SelectModule,
-    ToastModule
+    CommonModule, FormsModule, TableModule, ButtonModule, TagModule, TooltipModule,
+    SelectModule, Image, ProductFormComponent // <-- LO AGREGAMOS AQUÍ
   ],
   templateUrl: './product-list.component.html',
   styleUrls: ['./product-list.component.scss']
 })
 export class ProductListComponent implements OnInit {
   private productService = inject(ProductService);
-  private mediaService = inject(MediaService);
   private messageService = inject(MessageService);
-  private fb = inject(FormBuilder);
   private vpnService = inject(VpnService);
 
-  products: Product[] = [];
+  products: Product[] =[];
   isLoading = true;
   errorMessage = '';
   
-  // Variables del Modal
-  productDialog: boolean = false;
-  productForm!: FormGroup;
-  submitted: boolean = false;
-  isUploading: boolean = false; // Para mostrar spinner mientras sube foto
+  productDialogVisible: boolean = false;
+  selectedProduct: Product | null = null;
+  isSaving: boolean = false;
 
   statuses = [
     { label: 'ACTIVO', value: 'ACTIVO' },
@@ -69,136 +46,90 @@ export class ProductListComponent implements OnInit {
   ];
 
   ngOnInit() {
-    this.initForm();
-    this.checkVpnAndExecute(() => this.loadProducts());
-  }
-
-  // --- MÉTODO REUTILIZABLE (HELPER) ---
-  // Este es el truco para no repetir código. Le pasas una función y él la ejecuta
-  // solo si la VPN está activa.
-  
-
-  private checkVpnAndExecute(action: () => void) {
-    this.isLoading = true;
-    this.errorMessage = ''; // Limpiamos errores previos
-
-    this.vpnService.checkConnection().subscribe((isConnected) => {
-      if (!isConnected) {
-        this.isLoading = false;
-        this.products = [];
-        // 2. SETEAMOS EL MENSAJE EN LUGAR DE USAR MESSAGE SERVICE
-        this.errorMessage = '⛔ Modo Restringido: Conexión segura no detectada. Activa tu VPN para gestionar el inventario.';
-        return;
-      }
-      action();
-    });
-  }
-
-  
-
-  initForm() {
-    this.productForm = this.fb.group({
-      idProducto: [null], // Nulo al crear
-      nombre: ['', Validators.required],
-      idReferencia: ['', Validators.required], // SKU
-      descripcion: [''],
-      precioVenta: [null, [Validators.required, Validators.min(0)]],
-      precioCompra: [null, [Validators.required, Validators.min(0)]],
-      stock: [null, [Validators.required, Validators.min(0)]],
-      estado: ['ACTIVO', Validators.required],
-      imagenUrl: [''] // Aquí guardamos la URL que nos da MinIO
-    });
+    this.loadProducts();
   }
 
   loadProducts() {
-    this.productService.getProducts().subscribe({
-      next: (data) => {
-        this.products = data;
+    this.vpnService.checkConnection().subscribe((isConnected) => {
+      if (!isConnected) {
         this.isLoading = false;
-      },
-      error: (err) => { 
-        this.isLoading = false; 
-        // 3. CAPTURAMOS ERROR DE API TAMBIÉN
-        this.errorMessage = '⚠️ Error de Sincronización: No se pudo cargar el inventario. Revisa tu conexión.';
-        console.error(err);
-      }
-    });
-  }
-
-  // 2. BLINDAJE DE BOTÓN NUEVO
-  openNew() {
-    this.checkVpnAndExecute(() => {
-        // Todo esto solo pasa si hay VPN
-        this.productForm.reset();
-        this.productForm.patchValue({ estado: 'ACTIVO', precioVenta: 0, precioCompra: 0, stock: 0 });
-        this.submitted = false;
-        this.productDialog = true;
-        this.isLoading = false; // Apagamos el loading del chequeo
-    });
-  }
-
-
-  hideDialog() {
-    this.productDialog = false;
-    this.submitted = false;
-  }
-
-  // --- LÓGICA DE SUBIDA DE IMAGEN ---
-  onUpload(event: any) {
-    // PrimeNG devuelve el archivo en event.files[0]
-    const file = event.files[0];
-    if (!file) return;
-
-    this.isUploading = true;
-    
-    // Llamamos a nuestro servicio (y este al backend)
-    this.mediaService.uploadImage(file).subscribe({
-        next: (response) => {
-            // El backend nos devuelve { "url": "https://..." }
-            this.productForm.patchValue({ imagenUrl: response.url });
-            this.isUploading = false;
-            this.messageService.add({ severity: 'success', summary: 'Imagen Cargada', detail: 'La imagen se subió correctamente.' });
-        },
-        error: (err) => {
-            this.isUploading = false;
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo subir la imagen.' });
-            console.error(err);
-        }
-    });
-  }
-
-  saveProduct() {
-    this.submitted = true;
-
-    if (this.productForm.invalid) {
+        this.errorMessage = '⛔ Modo Restringido: Conexión segura no detectada.';
         return;
-    }
+      }
+      this.productService.getProducts().subscribe({
+        next: (data) => { this.products = data; this.isLoading = false; },
+        error: () => { this.isLoading = false; this.errorMessage = 'Error de conexión con la BD.'; }
+      });
+    });
+  }
 
-    const productData = this.productForm.value;
+  openNew() {
+    this.selectedProduct = null;
+    this.productDialogVisible = true;
+  }
 
-    this.isLoading = true;
+  editProduct(product: Product) {
+    this.selectedProduct = { ...product }; 
+    this.productDialogVisible = true;
+  }
 
-    // Aquí decidimos si es CREAR o ACTUALIZAR (por ahora CREAR)
+  closeDialog() {
+    this.productDialogVisible = false;
+    this.selectedProduct = null;
+  }
+
+  saveProduct(productData: Product) {
+    this.isSaving = true;
+
     if (productData.idProducto) {
-        // Lógica de actualizar (pendiente)
+      this.productService.updateProduct(productData.idProducto, productData).subscribe({
+        next: (updated) => {
+          const index = this.products.findIndex(p => p.idProducto === updated.idProducto);
+          if (index !== -1) this.products[index] = updated;
+          this.successHandler('Actualizado correctamente');
+        },
+        error: () => this.errorHandler()
+      });
     } else {
-        this.productService.createProduct(productData).subscribe({
-            next: (newProduct) => {
-                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Producto creado correctamente' });
-                this.products.push(newProduct); // Agregamos a la tabla sin recargar
-                this.isLoading = false;
-                this.hideDialog();
-            },
-            error: (err) => {
-                this.isLoading = false;
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar el producto' });
-                console.error(err);
-            }
-        });
+      this.productService.createProduct(productData).subscribe({
+        next: (created) => {
+          this.products.unshift(created);
+          this.successHandler('Creado correctamente');
+        },
+        error: () => this.errorHandler()
+      });
     }
   }
 
-  getSeverity(estado: string): "success" | "info" | "warn" | "danger" | "secondary" | "contrast" | undefined {
+  deleteProduct(product: Product) {
+    if (confirm(`¿Eliminar ${product.nombre}?`)) {
+      this.isLoading = true;
+      this.productService.deleteProduct(product.idProducto).subscribe({
+        next: () => {
+          this.products = this.products.filter(p => p.idProducto !== product.idProducto);
+          this.messageService.add({ severity: 'success', summary: 'Borrado', detail: 'Eliminado' });
+          this.isLoading = false;
+        },
+        error: () => {
+          this.isLoading = false;
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se puede eliminar' });
+        }
+      });
+    }
+  }
+
+  private successHandler(msg: string) {
+    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: msg });
+    this.isSaving = false;
+    this.closeDialog();
+  }
+
+  private errorHandler() {
+    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Operación fallida' });
+    this.isSaving = false;
+  }
+
+  getSeverity(estado: string): any {
     switch (estado) {
         case 'ACTIVO': return 'success';
         case 'INACTIVO': return 'danger';

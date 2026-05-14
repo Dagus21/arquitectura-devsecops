@@ -42,6 +42,22 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-    // Aquí podríamos añadir más métodos @ExceptionHandler para otros tipos de excepciones,
-    // como nuestra ResourceNotFoundException, para centralizar todo el manejo de errores.
+    // --- NUEVO: ESCUDO GLOBAL CATCH-ALL ---
+    // Atrapa cualquier error inesperado en tiempo de ejecución (Ej: NullPointer, Caídas de BD)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleAllUncaughtException(Exception ex) {
+        // 1. Registramos el error REAL en nuestros logs internos (consola de Dokploy)
+        // Usamos System.err o un Logger para que el desarrollador pueda depurarlo.
+        System.err.println("🚨 [ERROR CRÍTICO NO CONTROLADO]: " + ex.getMessage());
+        ex.printStackTrace(); // Esto solo se verá en el servidor, jamás en la web
+
+        // 2. Creamos una respuesta genérica, segura y amigable para el cliente (Frontend/Hacker)
+        Map<String, String> safeResponse = new HashMap<>();
+        safeResponse.put("error", "Error interno del servidor. Por favor, intente más tarde.");
+        
+        // 3. Devolvemos HTTP 500
+        return new ResponseEntity<>(safeResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    
 }

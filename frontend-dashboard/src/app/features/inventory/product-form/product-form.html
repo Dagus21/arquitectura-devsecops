@@ -1,0 +1,82 @@
+<!-- src/app/features/inventory/product-form/product-form.component.html -->
+<p-dialog
+  [(visible)]="visible"
+  [style]="{ width: '650px', maxWidth: '95vw' }"
+  [header]="productData ? 'Editar Producto' : 'Nuevo Producto'"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="cancel()"
+  headerStyleClass="!bg-white border-b border-gray-200"
+  contentStyleClass="!bg-white">
+
+  <ng-template pTemplate="content">
+    <form [formGroup]="productForm" class="flex flex-col gap-5 pt-4 pb-2 overflow-hidden">
+      
+      <div class="flex flex-col items-center justify-center border border-dashed border-gray-300 rounded-lg p-4 bg-gray-50 shadow-sm">
+        @if (productForm.get('imagenUrl')?.value) {
+          <div class="w-32 h-32 rounded-lg overflow-hidden border border-gray-200 shadow-sm mb-3">
+            <!-- AQUÍ TAMBIÉN AÑADIMOS EL P-IMAGE -->
+            <p-image [src]="productForm.get('imagenUrl')?.value" alt="Preview" [preview]="true" imageClass="w-32 h-32 object-cover"></p-image>
+          </div>
+        }
+        <p-fileUpload mode="basic" chooseLabel="Seleccionar Imagen" chooseIcon="pi pi-camera" name="file" accept="image/*" [auto]="true" [customUpload]="true" (uploadHandler)="onUpload($event)" [disabled]="isUploading" chooseStyleClass="!bg-[#000E29] hover:!bg-[#001B4B] !border-none !text-white transition-colors"></p-fileUpload>
+        @if (isUploading) {
+          <small class="text-blue-600 font-medium mt-2"><i class="pi pi-spin pi-spinner mr-1"></i> Subiendo imagen...</small>
+        }
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+        <div class="flex flex-col gap-1.5 w-full">
+          <label class="font-bold text-sm text-gray-700">Nombre del Producto</label>
+          <input type="text" pInputText formControlName="nombre" class="w-full border-gray-300" />
+        </div>
+        <div class="flex flex-col gap-1.5 w-full">
+          <label class="font-bold text-sm text-gray-700">Referencia (SKU)</label>
+          <input type="text" pInputText formControlName="idReferencia" class="w-full border-gray-300" />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-4 w-full">
+        <div class="flex flex-col gap-1.5 w-full">
+          <label class="font-bold text-sm text-gray-700">Descripción Pública <span class="text-xs font-normal text-gray-400">(Visible en la tienda)</span></label>
+          <textarea pInputTextarea formControlName="descripcion" rows="3" class="w-full resize-none border-gray-300"></textarea>
+        </div>
+        <div class="flex flex-col gap-1.5 w-full">
+          <label class="font-bold text-sm text-gray-700">Descripción Privada <span class="text-xs font-normal text-gray-400">(Solo visible aquí)</span></label>
+          <textarea pInputTextarea formControlName="descripcionPrivada" rows="2" class="w-full resize-none bg-yellow-50/50 border-yellow-200 focus:border-yellow-400" placeholder="Ej: Comprado al proveedor Don Pedro en el centro..."></textarea>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+        <div class="flex flex-col gap-1.5 w-full">
+          <label class="font-bold text-sm text-gray-700">Costo Compra</label>
+          <p-inputNumber formControlName="precioCompra" mode="currency" currency="COP" locale="es-CO" styleClass="w-full" inputStyleClass="w-full border-gray-300"></p-inputNumber>
+        </div>
+        <div class="flex flex-col gap-1.5 w-full">
+          <label class="font-bold text-sm text-gray-700">Precio Venta</label>
+          <p-inputNumber formControlName="precioVenta" mode="currency" currency="COP" locale="es-CO" styleClass="w-full" inputStyleClass="w-full border-gray-300"></p-inputNumber>
+        </div>
+        <div class="flex flex-col gap-1.5 w-full">
+          <label class="font-bold text-sm text-gray-700">Stock Inicial</label>
+          <p-inputNumber formControlName="stock" [min]="0" styleClass="w-full" inputStyleClass="w-full border-gray-300"></p-inputNumber>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5 w-full md:w-1/2">
+        <label class="font-bold text-sm text-gray-700">Estado</label>
+        <!-- Mantén appendTo="body" para evitar que se recorte -->
+        <p-select [options]="statuses" formControlName="estado" optionLabel="label" optionValue="value" styleClass="w-full border-gray-300" appendTo="body"></p-select>
+      </div>
+
+    </form>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-3 pt-4 pb-2">
+        <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text !text-red-500 hover:!bg-red-50 font-bold" (click)="cancel()"></button>
+        <button pButton label="Guardar" icon="pi pi-check" class="!bg-[#000E29] hover:!bg-[#001B4B] !border-none text-white shadow-md transition-colors" (click)="save()" [loading]="isLoading"></button>
+    </div>
+  </ng-template>
+
+</p-dialog>

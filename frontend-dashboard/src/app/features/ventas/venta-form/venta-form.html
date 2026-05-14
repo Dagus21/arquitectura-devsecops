@@ -1,0 +1,114 @@
+<p-dialog [(visible)]="visible" [style]="{ width: '700px', maxWidth: '95vw' }" header="Punto de Venta (POS)" [modal]="true" [draggable]="false" (onHide)="cancel()" headerStyleClass="!bg-white border-b border-gray-200" contentStyleClass="!bg-white pt-4">
+  
+  <!-- DATOS DEL CLIENTE (MODULARIZADO) -->
+  <div class="mb-5 p-4 bg-blue-50/50 rounded-xl border border-blue-100 flex flex-col gap-4">
+    
+    <!-- Buscador Autocompletado -->
+    <div class="flex flex-col gap-1 w-full border-b border-blue-200 pb-4">
+      <label class="font-bold text-xs text-blue-800 uppercase tracking-wider flex items-center">
+        <i class="pi pi-users mr-2"></i> Buscar Cliente (Opcional)
+      </label>
+      <p-select 
+        [options]="clientesRegistrados" 
+        [(ngModel)]="selectedClienteObj" 
+        optionLabel="nombre" 
+        [filter]="true" 
+        filterBy="nombre,email,telefono" 
+        [showClear]="true" 
+        placeholder="Escribe nombre, correo o teléfono..." 
+        styleClass="w-full border-gray-300" 
+        appendTo="body"
+        (onChange)="onClienteSelect()">
+        <ng-template let-cliente pTemplate="item">
+          <div class="flex flex-col">
+            <span class="font-bold text-sm">{{cliente.nombre}}</span>
+            <span class="text-xs text-gray-500">{{cliente.email}} <span *ngIf="cliente.telefono">| {{cliente.telefono}}</span></span>
+          </div>
+        </ng-template>
+      </p-select>
+    </div>
+
+    <!-- Campos Editables -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="flex flex-col gap-1">
+        <label class="font-bold text-xs text-blue-800 uppercase tracking-wider">Nombre Completo</label>
+        <input type="text" pInputText [(ngModel)]="clienteNombre" placeholder="Ej: Juan Pérez" class="w-full text-sm border-gray-300 bg-white">
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="font-bold text-xs text-blue-800 uppercase tracking-wider">Correo (Req. Factura)</label>
+        <input type="email" pInputText [(ngModel)]="clienteEmail" placeholder="cliente@correo.com" class="w-full text-sm border-gray-300 bg-white">
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="font-bold text-xs text-blue-800 uppercase tracking-wider">Teléfono / Celular</label>
+        <input type="tel" pInputText [(ngModel)]="clienteTelefono" placeholder="Opcional" class="w-full text-sm border-gray-300 bg-white">
+      </div>
+    </div>
+  </div>
+
+  <!-- SELECTOR DE PRODUCTOS -->
+  <div class="flex flex-col md:flex-row gap-3 items-end mb-5">
+    <div class="flex-1 flex flex-col gap-1">
+      <label class="font-bold text-sm text-gray-700">Producto</label>
+      <p-select [options]="availableProducts" [(ngModel)]="selectedProduct" optionLabel="nombre" [filter]="true" filterBy="nombre,idReferencia" [showClear]="true" placeholder="Buscar por nombre o SKU" styleClass="w-full border-gray-300" appendTo="body">
+        <ng-template let-prod pTemplate="item">
+          <div class="flex items-center justify-between w-full">
+            <span>{{prod.nombre}}</span>
+            <span class="text-xs font-bold" [class.text-red-500]="prod.stock === 0" [class.text-green-600]="prod.stock > 0">Stock: {{prod.stock}}</span>
+          </div>
+        </ng-template>
+      </p-select>
+    </div>
+    
+    <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden h-[42px] bg-white shrink-0">
+        <button class="w-10 h-full flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors" (click)="dec()"><i class="pi pi-minus"></i></button>
+        <span class="w-12 text-center font-bold text-lg text-[#000E29] select-none">{{quantity}}</span>
+        <button class="w-10 h-full flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors" (click)="inc()"><i class="pi pi-plus"></i></button>
+    </div>
+
+    <button pButton icon="pi pi-check" class="!bg-[#000E29] hover:!bg-[#001B4B] !border-none text-white h-[42px] shrink-0 px-4" (click)="addToCart()" [disabled]="!selectedProduct">Agregar</button>
+  </div>
+
+  <!-- CARRITO -->
+  <div class="border border-gray-200 rounded-lg overflow-hidden mb-4">
+    <p-table [value]="cart" [scrollable]="true" scrollHeight="200px" styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr class="bg-gray-50 text-xs">
+          <th>Producto</th>
+          <th class="text-center">Cant.</th>
+          <th class="text-right">Subtotal</th>
+          <th class="w-10"></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item let-i="rowIndex">
+        <tr class="text-sm">
+          <td class="font-medium">{{item.producto.nombre}}</td>
+          <td class="text-center">{{item.cantidad}}</td>
+          <td class="text-right font-bold text-blue-600">{{(item.producto.precioVenta * item.cantidad) | currency:'COP':'symbol-narrow':'1.0-0'}}</td>
+          <td><button pButton icon="pi pi-trash" class="p-button-text p-button-rounded p-button-danger p-0 w-6 h-6" (click)="removeFromCart(i)"></button></td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="4" class="text-center text-gray-400 py-6 font-medium">Agrega productos a la venta actual</td></tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-200">
+    <div class="flex flex-col gap-1">
+      <label class="font-bold text-sm text-gray-700">Método de Pago</label>
+      <p-select [options]="['EFECTIVO', 'TARJETA', 'TRANSFERENCIA']" [(ngModel)]="metodoPago" styleClass="border-gray-300 w-44" appendTo="body"></p-select>
+    </div>
+    <div class="text-right">
+      <p class="text-xs text-gray-500 font-bold uppercase tracking-widest m-0">Total a Cobrar</p>
+      <p class="text-4xl font-black text-[#000E29] m-0">{{calculateTotal() | currency:'COP':'symbol-narrow':'1.0-0'}}</p>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-3 pt-2">
+      <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text !text-red-500 font-bold" (click)="cancel()"></button>
+      <button pButton label="Registrar Venta" icon="pi pi-dollar" class="!bg-green-600 hover:!bg-green-700 !border-none text-white shadow-md font-bold px-6" (click)="save()" [loading]="isLoading" [disabled]="cart.length === 0"></button>
+    </div>
+  </ng-template>
+</p-dialog>

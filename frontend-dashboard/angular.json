@@ -74,7 +74,7 @@
           },
           "defaultConfiguration": "development",
           "options": {
-            "allowedHosts": ["dev-admin.miscelaneasdavid.shop"]
+            "allowedHosts": ["desktop-vaf4ep9-1.taila142d4.ts.net"]
           }
         },
         "extract-i18n": {

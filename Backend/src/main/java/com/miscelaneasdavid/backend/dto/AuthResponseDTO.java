@@ -5,11 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// DTO para la respuesta de autenticación. Solo contiene el token.
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthResponseDTO {
-    private String token;
+    // ELIMINAMOS private String token;
+    private String email; 
+    private String nombre; 
+    private String rol;    
 }

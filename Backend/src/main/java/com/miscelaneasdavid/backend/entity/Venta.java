@@ -20,6 +20,11 @@ public class Venta {
     private String canal;       // Ej: ONLINE, TIENDA_FISICA
     private String estado;      // Ej: PAGADO, PENDIENTE
     private String metodoPago;  // Ej: MERCADO_PAGO
+    // Agrega este campo para guardar el ID del pago real de MP (ej: 1234567890)
+    private String idTransaccion; 
+    // NUEVO: Llave de Idempotencia
+    @Column(name = "idempotency_key", unique = true, updatable = false)
+    private String idempotencyKey;
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")

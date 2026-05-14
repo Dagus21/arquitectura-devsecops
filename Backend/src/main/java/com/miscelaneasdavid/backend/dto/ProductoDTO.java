@@ -20,6 +20,8 @@ public class ProductoDTO {
 
     private String descripcion;
 
+    private String descripcionPrivada; 
+
     @NotNull(message = "El precio de venta es obligatorio")
     @Positive
     private BigDecimal precioVenta; // Antes 'precio' (ahora BigDecimal)

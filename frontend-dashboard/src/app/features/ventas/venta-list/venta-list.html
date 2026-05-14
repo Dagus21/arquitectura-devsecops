@@ -1,0 +1,113 @@
+<div class="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-gray-200">
+  <p-table #dt [value]="ventas" [paginator]="true" [rows]="10" [loading]="isLoading" 
+           class="p-datatable-sm" filterDisplay="row" [filterDelay]="400" sortField="fecha" [sortOrder]="-1">
+    
+    <ng-template pTemplate="caption">
+      <div class="flex items-center justify-between pb-2 border-b border-gray-100 mb-2">
+        <h2 class="text-xl font-extrabold text-[#000E29]">Historial de Ventas</h2>
+        <button pButton class="!bg-[#000E29] hover:!bg-[#001B4B] !border-none text-white shadow-md rounded-lg flex items-center shrink-0 px-4 py-2" (click)="dialogVisible = true">
+          <i class="pi pi-shop"></i>
+          <span class="hidden sm:inline-block ml-2 font-bold">Venta en Local (POS)</span>
+        </button>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="idVenta" style="width: 10%">Ref <p-sortIcon field="idVenta"></p-sortIcon></th>
+        <th pSortableColumn="fecha" style="width: 16%">Fecha <p-sortIcon field="fecha"></p-sortIcon></th>
+        <th pSortableColumn="nombreUsuario" style="width: 22%">Cliente <p-sortIcon field="nombreUsuario"></p-sortIcon></th>
+        <th pSortableColumn="metodoPago" style="width: 16%">Método <p-sortIcon field="metodoPago"></p-sortIcon></th>
+        <th pSortableColumn="estado" style="width: 14%">Estado <p-sortIcon field="estado"></p-sortIcon></th>
+        <th pSortableColumn="totalVenta" style="width: 12%">Total <p-sortIcon field="totalVenta"></p-sortIcon></th>
+        <th style="width: 10%">Acciones</th>
+      </tr>
+      
+      <tr>
+        <th><input pInputText type="text" (input)="dt.filter($any($event.target).value, 'idVenta', 'contains')" placeholder="ID..." class="w-full text-sm py-1.5 px-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"></th>
+        <th><p-datepicker (onSelect)="filterByDate($event, dt)" (onClear)="dt.filter('', 'fecha', 'contains')" [showClear]="true" placeholder="Seleccionar" appendTo="body" styleClass="w-full text-sm"></p-datepicker></th>
+        <th><input pInputText type="text" (input)="dt.filter($any($event.target).value, 'nombreUsuario', 'contains')" placeholder="Buscar nombre..." class="w-full text-sm py-1.5 px-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"></th>
+        <th><p-select [options]="metodosOptions" (onChange)="dt.filter($event.value, 'metodoPago', 'equals')" [showClear]="true" placeholder="Todos" appendTo="body" styleClass="w-full text-sm border-gray-300"></p-select></th>
+        <th><p-select [options]="estadosOptions" (onChange)="dt.filter($event.value, 'estado', 'equals')" [showClear]="true" placeholder="Todos" appendTo="body" styleClass="w-full text-sm border-gray-300"></p-select></th>
+        <th></th>
+        <th></th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-venta>
+      <tr>
+        <td class="font-mono text-xs font-bold text-gray-500">#{{venta.idVenta}}</td>
+        <td class="text-sm">{{venta.fecha | date:'dd/MM/yyyy HH:mm'}}</td>
+        <td>
+          <div class="flex flex-col">
+            <span class="font-bold text-sm text-[#000E29]">{{venta.nombreUsuario}}</span>
+            <span class="text-xs text-gray-400">{{venta.emailUsuario}}</span>
+          </div>
+        </td>
+        <td><p-tag [value]="venta.metodoPago" [severity]="getMetodoSeverity(venta.metodoPago)"></p-tag></td>
+        <td><p-tag [value]="venta.estado" [severity]="getEstadoSeverity(venta.estado)"></p-tag></td>
+        <td class="font-black text-blue-600">{{venta.totalVenta | currency:'COP':'symbol-narrow':'1.0-0'}}</td>
+        <td>
+          <div class="flex gap-1">
+            <button pButton icon="pi pi-eye" class="p-button-rounded p-button-text !text-blue-600 hover:!bg-blue-50" pTooltip="Ver Detalles" (click)="verDetalle(venta.idVenta)"></button>
+            
+            @if(venta.estado !== 'CANCELADO' && venta.estado !== 'REEMBOLSADO') {
+              <button pButton icon="pi pi-ban" class="p-button-rounded p-button-text !text-red-500 hover:!bg-red-50" pTooltip="Anular Venta" (click)="confirmarAnulacion(venta)"></button>
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="7" class="text-center p-6 text-gray-500 font-medium">No se encontraron ventas para esta búsqueda.</td></tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Modal Formulario -->
+<app-venta-form [visible]="dialogVisible" [isLoading]="isSaving" (onSave)="saveVenta($event)" (onCancel)="dialogVisible = false"></app-venta-form>
+
+<!-- Modal Mini-Factura (Detalles) -->
+<p-dialog [(visible)]="detalleVisible" [style]="{ width: '450px' }" header="Detalle de Venta #{{ventaDetalle?.idVenta}}" [modal]="true" [draggable]="false" headerStyleClass="!bg-white border-b border-gray-200" contentStyleClass="!bg-white">
+  
+  @if(ventaDetalle) {
+    <div class="p-2 sm:p-4 bg-white">
+      
+      <div class="flex justify-between border-b border-gray-200 pb-3 mb-3">
+        <div class="flex flex-col">
+          <span class="text-xs text-gray-500 font-bold uppercase">Cliente</span>
+          <span class="font-bold text-[#000E29]">{{ventaDetalle.nombreUsuario}}</span>
+          <span class="text-sm text-gray-600">{{ventaDetalle.emailUsuario}}</span>
+          
+          @if(ventaDetalle.telefonoUsuario) {
+            <span class="text-sm text-gray-600">Tel: {{ventaDetalle.telefonoUsuario}}</span>
+          }
+        </div>
+        <div class="text-right flex flex-col">
+          <span class="text-xs text-gray-500 font-bold uppercase">Fecha</span>
+          <span class="text-sm font-medium">{{ventaDetalle.fecha | date:'dd/MM/yyyy HH:mm'}}</span>
+          <p-tag [value]="ventaDetalle.estado" [severity]="getEstadoSeverity(ventaDetalle.estado)" styleClass="mt-1"></p-tag>
+        </div>
+      </div>
+
+      <!-- Lista de Productos -->
+      <div class="flex flex-col gap-2 mb-4">
+        <span class="text-xs text-gray-500 font-bold uppercase">Productos</span>
+        
+        @for(item of ventaDetalle.items; track item.nombreProducto) {
+          <div class="flex justify-between items-center text-sm p-2 bg-gray-50 rounded-md border border-gray-100">
+            <span>{{item.cantidad}}x <span class="font-medium text-gray-800">{{item.nombreProducto}}</span></span>
+            <span class="font-bold text-blue-600">{{item.subtotal | currency:'COP':'symbol-narrow':'1.0-0'}}</span>
+          </div>
+        }
+
+      </div>
+
+      <div class="flex justify-between items-center border-t border-gray-200 pt-3">
+        <span class="text-gray-500 font-bold text-sm">Total Pagado ({{ventaDetalle.metodoPago}})</span>
+        <span class="text-2xl font-black text-[#000E29]">{{ventaDetalle.totalVenta | currency:'COP':'symbol-narrow':'1.0-0'}}</span>
+      </div>
+    </div>
+  }
+</p-dialog>

@@ -1,53 +1,79 @@
-<div class="min-h-screen flex flex-col bg-slate-50">
+<!-- src/app/features/dashboard/dashboard.component.html -->
+<div class="h-screen w-full flex bg-[#D9D9D9] overflow-hidden font-sans relative">
     
-    <!-- Barra Superior (Toolbar) -->
-    <p-toolbar class="bg-white border-none shadow-sm px-6 py-3">
-        <div class="p-toolbar-group-start">
-            <span class="text-xl font-bold text-gray-800">
-                🛍️ Tienda Omnilocal
-            </span>
+    <!-- OVERLAY OSCURO PARA MÓVIL -->
+    @if(mobileMenuOpen) {
+        <div class="fixed inset-0 bg-black/50 z-30 md:hidden" (click)="mobileMenuOpen = false"></div>
+    }
+
+    <!-- MENU LATERAL (Deslizable en móvil, fijo en PC) -->
+    <aside [class.translate-x-0]="mobileMenuOpen" [class.-translate-x-full]="!mobileMenuOpen" class="fixed md:static top-0 left-0 h-full w-64 bg-[#000E29] text-white flex flex-col shadow-2xl z-40 transition-transform duration-300 md:translate-x-0">
+        <!-- Logo Area -->
+        <div class="h-16 flex items-center justify-between px-6 bg-[#000a1f] border-b border-white/5 shrink-0">
+            <div class="flex items-center">
+                <img src="assets/logo.svg" alt="Logo" class="w-16 h-16 object-contain mr-3" onerror="this.src='favicon.ico'">
+                <span class="text-xl font-extrabold tracking-tight">Misceláneas <span class="font-light text-blue-300">David</span></span>
+            </div>
+            <button class="md:hidden text-gray-400 hover:text-white" (click)="mobileMenuOpen = false">
+                <i class="pi pi-times text-xl"></i>
+            </button>
         </div>
+
+        <!-- Links de Navegación -->
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto mt-2">
+            <a routerLink="/dashboard/products" routerLinkActive="bg-blue-600/10 border-blue-500/20 text-white" (click)="mobileMenuOpen = false" class="p-3 rounded-lg hover:bg-white/5 border border-transparent flex items-center gap-3 text-gray-400 hover:text-white font-semibold cursor-pointer transition-all">
+                <i class="pi pi-box text-blue-400"></i> Inventario
+            </a>
+            <a routerLink="/dashboard/ventas" routerLinkActive="bg-blue-600/10 border-blue-500/20 text-white" (click)="mobileMenuOpen = false" class="p-3 rounded-lg hover:bg-white/5 border border-transparent transition-colors flex items-center gap-3 text-gray-400 hover:text-white cursor-pointer font-semibold">
+                <i class="pi pi-shopping-cart text-blue-400"></i> Ventas
+            </a>
+            <!-- AQUI AÑADIMOS LA RUTA DE USUARIOS -->
+            <a routerLink="/dashboard/usuarios" routerLinkActive="bg-blue-600/10 border-blue-500/20 text-white" (click)="mobileMenuOpen = false" class="p-3 rounded-lg hover:bg-white/5 border border-transparent transition-colors flex items-center gap-3 text-gray-400 hover:text-white cursor-pointer font-semibold">
+                <i class="pi pi-users text-blue-400"></i> Usuarios
+            </a>
+        </nav>
+
+        <div class="p-4 shrink-0">
+            <div class="p-3 bg-white/5 rounded-xl border border-white/10 text-center">
+                <p class="text-[10px] text-blue-200/50 uppercase tracking-widest font-bold">Sistema Protegido</p>
+                <p class="text-xs text-gray-400 mt-1">Arquitectura Zero-Trust</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ÁREA DERECHA -->
+    <div class="flex-1 flex flex-col min-w-0 w-full">
         
-        <div class="p-toolbar-group-end gap-3">
-            <div class="flex items-center gap-2 mr-4">
-                <p-avatar icon="pi pi-user" class="mr-2" shape="circle"></p-avatar>
-                <span class="font-medium text-sm">Administrador</span>
+        <!-- BARRA SUPERIOR -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 shadow-sm z-10 shrink-0">
+            <div class="flex items-center gap-3">
+                <button class="md:hidden text-[#000E29] hover:text-blue-600 transition-colors" (click)="mobileMenuOpen = true">
+                    <i class="pi pi-bars text-2xl"></i>
+                </button>
+                <span class="text-[10px] font-bold tracking-widest uppercase text-blue-700 bg-blue-50 px-3 py-1 rounded-md border border-blue-100 hidden sm:block">
+                    Admin Panel
+                </span>
             </div>
             
-            <p-button 
-                label="Salir" 
-                icon="pi pi-power-off" 
-                severity="danger" 
-                [text]="true" 
-                (onClick)="logout()">
-            </p-button>
-        </div>
-    </p-toolbar>
-
-    <!-- Contenido Principal -->
-    <div class="flex flex-1 overflow-hidden">
-        
-        <!-- Menú Lateral (Sidebar Simple) -->
-        <aside class="w-64 bg-white shadow-md hidden md:block z-10">
-            <nav class="p-4 flex flex-col gap-2">
-                <a class="p-3 rounded hover:bg-slate-100 flex items-center gap-3 text-gray-700 cursor-pointer font-medium bg-blue-50 text-blue-600">
-                    <i class="pi pi-box"></i> Productos
-                </a>
-                <a class="p-3 rounded hover:bg-slate-100 flex items-center gap-3 text-gray-600 cursor-pointer">
-                    <i class="pi pi-shopping-cart"></i> Ventas
-                </a>
-                <a class="p-3 rounded hover:bg-slate-100 flex items-center gap-3 text-gray-600 cursor-pointer">
-                    <i class="pi pi-users"></i> Usuarios
-                </a>
-            </nav>
-        </aside>
-
-        <!-- Área de Trabajo (Donde se cargarán las tablas) -->
-        <main class="flex-1 p-6 overflow-auto">
-            <div class="bg-white rounded-lg shadow p-6 min-h-full">
-                <h1 class="text-2xl font-bold mb-4">Panel de Productos</h1>
-                <router-outlet></router-outlet> <!-- Aquí se renderizarán los hijos -->
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 sm:gap-3 border-r border-gray-200 pr-3 sm:pr-4">
+                    <p-avatar icon="pi pi-user" shape="circle" [style]="{'background-color': '#e0e7ff', 'color': '#001B4B'}"></p-avatar>
+                    <div class="flex flex-col min-w-0">
+                        <span class="hidden sm:block text-sm font-bold text-[#000E29] leading-none">Administrador</span>
+                        <span class="text-xs text-gray-500 sm:mt-1 leading-none truncate max-w-[130px] sm:max-w-none">useradmin&#64;gmail.com</span>
+                    </div>
+                </div>
+                
+                <button (click)="logout()" class="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium text-sm active:scale-95">
+                    <i class="pi pi-power-off"></i>
+                    <span class="hidden sm:inline">Salir</span>
+                </button>
             </div>
+        </header>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="flex-1 overflow-auto p-4 sm:p-6">
+            <router-outlet></router-outlet>
         </main>
     </div>
 </div>
