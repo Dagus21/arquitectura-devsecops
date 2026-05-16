@@ -70,7 +70,7 @@ jobs:
           push: true
           tags: ghcr.io/${{ steps.strings.outputs.owner_lc }}/tienda-dashboard:latest
           build-args: |
-            API_URL=API_URL=https://vmi2897387.taila142d4.ts.net:8080/api
+            API_URL=https://vmi2897387.taila142d4.ts.net:8080/api
 
       # ----------------------------------------------------------------
       # FASE DE DESPLIEGUE (ESTRATEGIA HÍBRIDA)
