@@ -1,31 +1,30 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image'; // <-- IMPORTACIÓN DE NEXT.JS
 import { Product } from '@/features/products/types/product.interface';
 import { formatPrice } from '@/lib/utils';
-// Añadimos los iconos Eye y X
 import { ImageIcon, Info, Eye, X } from 'lucide-react';
 import ProductQuickView from './ProductQuickView'; 
 
 export default function ProductCard({ product }: { product: Product }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // NUEVO: Estado para controlar la imagen en pantalla completa
   const [isZoomed, setIsZoomed] = useState(false);
 
-  // Verificamos si hay disponibilidad
   const isAgotado = product.disponible === false || product.estado === 'AGOTADO';
 
   return (
     <>
       <article className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group hover:shadow-lg transition-all duration-300 flex flex-col h-full">
+        
         {/* Imagen */}
         <div className="relative aspect-square bg-gray-50 overflow-hidden flex items-center justify-center">
           {product.imagenUrl ? (
-            <img 
+            <Image 
               src={product.imagenUrl} 
               alt={product.nombre} 
-              // Hacemos que al hacer clic en la foto, también abra el detalle
+              width={600} 
+              height={600}
               onClick={() => setIsModalOpen(true)}
               className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 cursor-pointer"
             />
@@ -37,14 +36,12 @@ export default function ProductCard({ product }: { product: Product }) {
             {isAgotado ? 'AGOTADO' : 'EN STOCK'}
           </div>
 
-          {/* NUEVO: Botón Ojo (Inspeccionar Foto) */}
           {product.imagenUrl && (
             <button
               onClick={(e) => {
-                e.stopPropagation(); // Evita que se abra el modal de detalle
-                setIsZoomed(true);   // Abre el zoom
+                e.stopPropagation(); 
+                setIsZoomed(true);   
               }}
-              // En móvil (opacity-100) siempre se ve. En PC (md:opacity-0) se oculta hasta el hover
               className="absolute top-3 right-3 p-2 bg-white/90 hover:bg-white rounded-full shadow-md text-gray-700 hover:text-[#000E29] transition-all duration-200 opacity-100 md:opacity-0 group-hover:opacity-100 z-10 active:scale-95"
               title="Inspeccionar foto"
             >
@@ -62,7 +59,6 @@ export default function ProductCard({ product }: { product: Product }) {
             {formatPrice(product.precioVenta)}
           </div>
           
-          {/* Botón que abre el modal de detalles */}
           <button 
             onClick={() => setIsModalOpen(true)}
             disabled={isAgotado}
@@ -81,20 +77,18 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
       </article>
 
-      {/* Modal de detalles de compra */}
       <ProductQuickView 
         product={product} 
         isOpen={isModalOpen} 
         setIsOpen={setIsModalOpen} 
       />
 
-      {/* NUEVA SECCIÓN: OVERLAY PANTALLA COMPLETA PARA LA IMAGEN (ZOOM) */}
+      {/* OVERLAY PANTALLA COMPLETA PARA LA IMAGEN (ZOOM) */}
       {isZoomed && product.imagenUrl && (
         <div 
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 sm:p-10 backdrop-blur-sm animate-in fade-in duration-200 cursor-zoom-out"
           onClick={() => setIsZoomed(false)}
         >
-          {/* Botón Cerrar (Esquina superior derecha) */}
           <button 
             className="absolute top-6 right-6 sm:top-10 sm:right-10 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 rounded-full p-2 sm:p-3 transition-all active:scale-95"
             onClick={(e) => { e.stopPropagation(); setIsZoomed(false); }}
@@ -102,7 +96,7 @@ export default function ProductCard({ product }: { product: Product }) {
             <X className="w-6 h-6 sm:w-8 sm:h-8" />
           </button>
           
-          {/* Imagen Escalada */}
+          {/* Aquí usamos <img> normal porque el zoom es pantalla completa sin un height definido */}
           <img 
             src={product.imagenUrl} 
             alt={product.nombre} 
