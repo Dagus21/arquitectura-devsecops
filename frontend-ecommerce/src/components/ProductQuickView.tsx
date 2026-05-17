@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image'; // <-- IMPORTACIÓN DE NEXT.JS
 import { Product } from '@/features/products/types/product.interface';
 import { useCartStore } from '@/lib/store';
 import { formatPrice } from '@/lib/utils';
@@ -66,11 +65,9 @@ export default function ProductQuickView({ product, isOpen, setIsOpen }: Props) 
             >
               {product.imagenUrl ? (
                 <>
-                  <Image 
+                  <img 
                     src={product.imagenUrl} 
                     alt={product.nombre} 
-                    width={500}
-                    height={500}
                     className="object-cover w-full h-full absolute inset-0" 
                   />
                   

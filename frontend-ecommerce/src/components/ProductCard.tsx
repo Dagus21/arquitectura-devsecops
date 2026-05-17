@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image'; // <-- IMPORTACIÓN DE NEXT.JS
 import { Product } from '@/features/products/types/product.interface';
 import { formatPrice } from '@/lib/utils';
 import { ImageIcon, Info, Eye, X } from 'lucide-react';
@@ -20,11 +19,9 @@ export default function ProductCard({ product }: { product: Product }) {
         {/* Imagen */}
         <div className="relative aspect-square bg-gray-50 overflow-hidden flex items-center justify-center">
           {product.imagenUrl ? (
-            <Image 
+            <img 
               src={product.imagenUrl} 
               alt={product.nombre} 
-              width={600} 
-              height={600}
               onClick={() => setIsModalOpen(true)}
               className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 cursor-pointer"
             />
@@ -83,7 +80,6 @@ export default function ProductCard({ product }: { product: Product }) {
         setIsOpen={setIsModalOpen} 
       />
 
-      {/* OVERLAY PANTALLA COMPLETA PARA LA IMAGEN (ZOOM) */}
       {isZoomed && product.imagenUrl && (
         <div 
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 sm:p-10 backdrop-blur-sm animate-in fade-in duration-200 cursor-zoom-out"
@@ -96,7 +92,6 @@ export default function ProductCard({ product }: { product: Product }) {
             <X className="w-6 h-6 sm:w-8 sm:h-8" />
           </button>
           
-          {/* Aquí usamos <img> normal porque el zoom es pantalla completa sin un height definido */}
           <img 
             src={product.imagenUrl} 
             alt={product.nombre} 
