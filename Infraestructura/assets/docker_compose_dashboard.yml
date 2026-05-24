@@ -1,0 +1,16 @@
+services:
+  dashboard:
+    # Usamos TU imagen de GitHub Container Registry
+    image: ghcr.io/dagus21/tienda-dashboard:latest
+    container_name: dashboard-privado
+    restart: always
+    
+    # NUEVA SINTAXIS UNIVERSAL DE LÍMITES
+    mem_limit: 128m
+    
+    ports:
+      # AQUÍ ESTÁ EL TRUCO DE SEGURIDAD:
+      # 127.0.0.1 -> Solo escucha dentro del VPS (Privado)
+      # 4200      -> Puerto en el VPS donde escuchará Tailscale
+      # 80        -> Puerto interno del contenedor (Caddy)
+      - "127.0.0.1:4200:80"
