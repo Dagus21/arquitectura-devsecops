@@ -1,0 +1,18 @@
+services:
+  ecommerce:
+    image: ghcr.io/dagus21/tienda-ecommerce:latest
+    container_name: ecommerce-compose
+    restart: always
+    
+    mem_limit: 1024m
+    mem_reservation: 512m
+    
+    ports:
+      - "127.0.0.1:3001:3000"
+
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true

@@ -40,3 +40,8 @@ build/
 start_dev.ps1
 stop_dev.ps1
 docker-compose.dev.yml
+
+# ==================================
+# Seguridad: Ignorar migraciones BD
+# ==================================
+src/main/resources/db/

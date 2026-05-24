@@ -1,0 +1,50 @@
+services:
+  backend:
+    image: ghcr.io/dagus21/tienda-backend:latest
+    container_name: backend-compose
+    restart: always
+    
+    # NUEVA SINTAXIS UNIVERSAL DE LÍMITES
+    # límite máximo absoluto de memoria RAM que un contenedor puede usar.
+    mem_limit: 2048m
+    # garantía o reserva mínima de memoria que Docker intentará mantener siempre disponible para 
+    # ese contenedor, incluso si el servidor está bajo mucho estrés.
+    mem_reservation: 1024m
+    
+    networks:
+      - dokploy-network
+      
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/productos/publicos"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+      
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL}
+      - MINIO_INTERNAL_URL=${MINIO_INTERNAL_URL}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - SWAGGER_ENABLED=${SWAGGER_ENABLED}
+      # --- AGREGAR ESTAS 6 LÍNEAS DE MERCADO PAGO ---
+      - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
+      - MP_WEBHOOK_SECRET=${MP_WEBHOOK_SECRET}
+      - MP_URL_SUCCESS=${MP_URL_SUCCESS}
+      - MP_URL_FAILURE=${MP_URL_FAILURE}
+      - MP_URL_PENDING=${MP_URL_PENDING}
+      - MP_WEBHOOK_URL=${MP_WEBHOOK_URL}
+      # ---------------------------------------------
+      - JAVA_TOOL_OPTIONS=-Xmx1536m
+
+networks:
+  dokploy-network:
+    external: true
