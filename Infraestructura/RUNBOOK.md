@@ -258,6 +258,8 @@ De esta forma, las rutas definitivas y seguras del sistema, accesibles única y 
 
 Nota: Estas URL fueron las generadas en el proyecto , claramente si se intenta replicar el ejercicio en otro entorno o servidor , las direcciones cambian , ya que Tailscale asigna un dominio diferente.
 
+Cabe resaltar que para los servicios publicos se hace obligatorio dentro de cada servicio en Dokploy configurar sus respectivos dominios , como se pueden ver en las evidencias : (`assets/dominio_ecommerce.png`)  (`assets/dominio_backend.png`) (`assets/dominio_minIO.png`)
+
 ### 4.3. Despliegue de Servicios (Protección de Puertos y Recursos)
 **[Entorno: Panel Web de Dokploy / Repositorio de Código]**
 
