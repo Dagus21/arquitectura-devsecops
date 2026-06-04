@@ -140,7 +140,6 @@ Antes de cerrar el servidor con el firewall, se configuró el proxy inverso en l
    - **Protección API:** Bloquea peticiones al Backend cuyo origen no sea el dominio autorizado.
    - **Rate Limit Anti-Fraude:** Limita las peticiones a endpoints sensibles (Checkout/Auth) para evitar ataques de fuerza bruta.
 
-   *(Ver evidencia visual en Anexos: Reglas WAF de Cloudflare - `assets/reglas_waf.png`)*
 ### 2.4. Aislamiento de la Interfaz VPN y Automatización de Whitelisting (UFW)
 **[Entorno: Terminal del VPS (Vía conexión VPN de Tailscale)]**
 
