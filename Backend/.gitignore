@@ -44,4 +44,4 @@ docker-compose.dev.yml
 # ==================================
 # Seguridad: Ignorar migraciones BD
 # ==================================
-src/main/resources/db/
+#src/main/resources/db/
