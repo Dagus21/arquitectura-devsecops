@@ -93,7 +93,7 @@ export default function RegisterPage() {
               <label className="text-sm font-semibold text-gray-700">Nombre Completo</label>
               <Input 
                 type="text" 
-                placeholder="Ej. Juan Pérez"
+                placeholder="Ej. Nombre_ejemplo"
                 value={form.nombre}
                 onChange={(e) => {
                   setForm({...form, nombre: e.target.value});
